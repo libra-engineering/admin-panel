@@ -24,7 +24,8 @@ import type {
   RevertPromptRequest,
   RevertPromptResponse,
   Connector,
-  ConnectorsResponse
+  ConnectorsResponse,
+  EnvConfig
 } from '../types/admin'
 
 const API_BASE = '/admin'
@@ -92,6 +93,22 @@ export const adminApi = {
     const params: Record<string, any> = { period }
     if (organizationId) params.organizationId = organizationId
     const response = await api.get(`${API_BASE}/token-usage/stats`, { params })
+    return response.data
+  },
+
+  // Config Management
+  async getOrganizationConfig(organizationId: string): Promise<EnvConfig[]> {
+    const response = await api.get(`${API_BASE}/config/${encodeURIComponent(organizationId)}`)
+    return response.data
+  },
+
+  async setOrganizationConfig(organizationId: string, key: string, value: string): Promise<{ message: string }> {
+    const response = await api.post(`${API_BASE}/config/${encodeURIComponent(organizationId)}`, { key, value })
+    return response.data
+  },
+
+  async deleteOrganizationConfig(organizationId: string, key: string): Promise<{ message: string }> {
+    const response = await api.delete(`${API_BASE}/config/${encodeURIComponent(organizationId)}/${encodeURIComponent(key)}`)
     return response.data
   },
 
@@ -317,11 +334,6 @@ export const adminApi = {
 
   async getPromptTokenSize(identifier: string): Promise<import('../types/admin').PromptTokenSizeResponse> {
     const response = await api.get(`${API_BASE}/prompts/token-size/${encodeURIComponent(identifier)}`)
-    return response.data
-  },
-  // Connectors metadata (superadmin only)
-  async getConnectorsMetadata(): Promise<{ coreTools: string[]; connectors: Array<{ type: string; tools: string[]; webhookEvents: string[] }> }> {
-    const response = await api.get(`${API_BASE}/connectors/metadata`)
     return response.data
   }
 } 

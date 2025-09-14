@@ -18,6 +18,7 @@ import { Toaster } from 'sonner'
 import { AuthProvider, ProtectedRoute } from './components/auth/AuthContext'
 import AgentsPage from './pages/AgentsPage'
 import WorkflowBuilder from './pages/WorkflowBuilder'
+import OrganizationConfigPage from '@/pages/OrganizationConfigPage'
 
 // App component with authentication logic
 const AppContent = () => {
@@ -58,6 +59,7 @@ const AppContent = () => {
             <Route path="prompts/editor/:identifier" element={<PromptEditor />} />
             <Route path="prompts" element={<PromptsPage />} />
             <Route path="logs" element={<LogsPage />} />
+            <Route path="organizations/:organizationId/config" element={<OrganizationConfigPage />} />
             <Route path='agents' element={<AgentsPage />} />
             <Route path='workflows/new' element={<WorkflowBuilder />} />
             <Route path='workflows/:id' element={<WorkflowBuilder />} />

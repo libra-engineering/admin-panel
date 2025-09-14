@@ -42,17 +42,17 @@ export function TableRow({ children, className = '', onClick }: TableProps & { o
   )
 }
 
-export function TableHead({ children, className = '' }: TableProps) {
+export function TableHead({ children, className = '', ...rest }: TableProps & React.ThHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <th className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${className}`}>
+    <th className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${className}`} {...rest}>
       {children}
     </th>
   )
 }
 
-export function TableCell({ children, className = '' }: TableProps) {
+export function TableCell({ children, className = '', ...rest }: TableProps & React.TdHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <td className={`px-6 text-start py-4 whitespace-nowrap text-sm text-gray-900 ${className}`}>
+    <td className={`px-6 text-start py-4 whitespace-nowrap text-sm text-gray-900 ${className}`} {...rest}>
       {children}
     </td>
   )

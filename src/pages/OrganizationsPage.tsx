@@ -151,7 +151,7 @@ export default function OrganizationsPage() {
                       >
                         Edit
                       </Button>
-                      <Button
+                      {/* <Button
                         variant="outline"
                         size="sm"
                         onClick={() =>
@@ -162,6 +162,13 @@ export default function OrganizationsPage() {
                         }
                       >
                         View
+                      </Button> */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(`/admin/organizations/${org.id}/config`, "_blank")}
+                      >
+                        Env Config
                       </Button>
                       <Button
                         variant="outline"

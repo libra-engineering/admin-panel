@@ -15,6 +15,15 @@ export interface Organization {
   connectors?: Connector[]
 }
 
+export interface EnvConfig {
+  id: string
+  organizationId: string
+  key: string
+  value: string
+  createdAt: string
+  updatedAt: string
+}
+
 export interface User {
   id: string
   email: string
