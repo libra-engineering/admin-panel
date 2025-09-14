@@ -318,5 +318,10 @@ export const adminApi = {
   async getPromptTokenSize(identifier: string): Promise<import('../types/admin').PromptTokenSizeResponse> {
     const response = await api.get(`${API_BASE}/prompts/token-size/${encodeURIComponent(identifier)}`)
     return response.data
+  },
+  // Connectors metadata (superadmin only)
+  async getConnectorsMetadata(): Promise<{ coreTools: string[]; connectors: Array<{ type: string; tools: string[]; webhookEvents: string[] }> }> {
+    const response = await api.get(`${API_BASE}/connectors/metadata`)
+    return response.data
   }
 } 

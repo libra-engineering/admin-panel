@@ -14,7 +14,10 @@ import PromptEditor from '@/pages/PromptEditor'
 import LogsPage from '@/pages/LogsPage'
 import { ROUTES } from '@/lib/constants'
 import './App.css'
+import { Toaster } from 'sonner'
 import { AuthProvider, ProtectedRoute } from './components/auth/AuthContext'
+import AgentsPage from './pages/AgentsPage'
+import WorkflowBuilder from './pages/WorkflowBuilder'
 
 // App component with authentication logic
 const AppContent = () => {
@@ -31,6 +34,7 @@ const AppContent = () => {
   return (
     <Router>
       <AuthProvider>
+        <Toaster richColors position="top-right" style={{ zIndex: 9999 }} />
 
         <Routes>
           <Route
@@ -54,6 +58,9 @@ const AppContent = () => {
             <Route path="prompts/editor/:identifier" element={<PromptEditor />} />
             <Route path="prompts" element={<PromptsPage />} />
             <Route path="logs" element={<LogsPage />} />
+            <Route path='agents' element={<AgentsPage />} />
+            <Route path='workflows/new' element={<WorkflowBuilder />} />
+            <Route path='workflows/:id' element={<WorkflowBuilder />} />
           </Route>
           <Route
             path={ROUTES.HOME}
