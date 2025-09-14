@@ -84,6 +84,11 @@ export const adminApi = {
     return response.data
   },
 
+  async getConnectorsMetadata(): Promise<any> {
+    const response = await api.get(`${API_BASE}/connectors/metadata`)
+    return response.data
+  },
+
   async getConnectors(): Promise<ConnectorsResponse> {
     const response = await api.get(`${API_BASE}/connectors`)
     return response.data
