@@ -188,7 +188,7 @@ export const libraryApi = {
     return res.data
   },
   async deleteWorkflowTemplate(id: string): Promise<void> {
-    await api.delete(`/library/workflows/${id}`)
+    await api.delete(`/admin/library/workflows/${id}`)
   },
   async getWorkflowTemplate(id: string): Promise<WorkflowLibraryItem> {
     const res = await api.get(`/admin/library/workflows/${id}`)
