@@ -45,7 +45,7 @@ const AppContent = () => {
           <Route
             path="/admin"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRoles={['superadmin']}>
                 <AdminLayout />
               </ProtectedRoute>
             }

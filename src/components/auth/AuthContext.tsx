@@ -73,8 +73,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 }
 
 // Protected Route component
-export function ProtectedRoute({ children }: { children: ReactNode }) {
+export function ProtectedRoute({ children, requiredRoles }: { children: ReactNode, requiredRoles?: Array<'user' | 'admin' | 'superadmin'> }) {
     const { isAuthenticated, isLoading } = useAuth()
+    const storedUserRaw = typeof window !== 'undefined' ? localStorage.getItem('user') : null
+    const storedUser = storedUserRaw ? JSON.parse(storedUserRaw) as { role?: 'user' | 'admin' | 'superadmin' } : null
 
     if (isLoading) {
         // Return a loading state or null to prevent flash
@@ -83,6 +85,13 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
 
     if (!isAuthenticated) {
         return <Navigate to="/login" />
+    }
+
+    if (requiredRoles && requiredRoles.length > 0) {
+        const role = storedUser?.role
+        if (!role || !requiredRoles.includes(role)) {
+            return <Navigate to="/login" />
+        }
     }
 
     return <>{children}</>
