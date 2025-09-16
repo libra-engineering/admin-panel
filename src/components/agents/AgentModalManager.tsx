@@ -144,7 +144,7 @@ const AgentCreateModal: React.FC<{ onClose: () => void; onSuccess: (agent: Agent
   const [customInstructions, setCustomInstructions] = useState('')
   const [tools, setTools] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
-
+  const [category, setCategory] = useState('')
   const submit = async () => {
     if (!name.trim()) return
     setSubmitting(true)
@@ -154,6 +154,7 @@ const AgentCreateModal: React.FC<{ onClose: () => void; onSuccess: (agent: Agent
         description: description.trim() || null,
         customInstructions: customInstructions.trim() || null,
         tools,
+        category: category.trim() || null,
       }
       const created = await libraryApi.createAgentTemplate(body)
       onSuccess(created)
@@ -183,6 +184,10 @@ const AgentCreateModal: React.FC<{ onClose: () => void; onSuccess: (agent: Agent
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Custom Instructions</label>
           <textarea className="w-full border border-gray-300 rounded-md px-3 py-2" rows={3} value={customInstructions} onChange={e => setCustomInstructions(e.target.value)} />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+          <textarea className="w-full border border-gray-300 rounded-md px-3 py-2" rows={3} value={category} onChange={e => setCategory(e.target.value)} />
         </div>
       </div>
     </ModalBase>
@@ -355,6 +360,7 @@ const AgentEditModal: React.FC<{ agent: AgentLibraryItem; onClose: () => void; o
   const [customInstructions, setCustomInstructions] = useState(agent.customInstructions || '')
   const [tools, setTools] = useState<string[]>(agent.tools || [])
   const [submitting, setSubmitting] = useState(false)
+  const [category, setCategory] = useState(agent.category || '')
 
   const submit = async () => {
     if (!name.trim()) return
@@ -365,6 +371,7 @@ const AgentEditModal: React.FC<{ agent: AgentLibraryItem; onClose: () => void; o
         description: description.trim() || null,
         customInstructions: customInstructions.trim() || null,
         tools,
+        category: category.trim() || null,
       }
       const updated = await libraryApi.updateAgentTemplate(agent.id, body)
       onSuccess(updated)
@@ -394,6 +401,10 @@ const AgentEditModal: React.FC<{ agent: AgentLibraryItem; onClose: () => void; o
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Custom Instructions</label>
           <textarea className="w-full border border-gray-300 rounded-md px-3 py-2" rows={3} value={customInstructions} onChange={e => setCustomInstructions(e.target.value)} />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+          <textarea className="w-full border border-gray-300 rounded-md px-3 py-2" rows={3} value={category} onChange={e => setCategory(e.target.value)} />
         </div>
       </div>
     </ModalBase>

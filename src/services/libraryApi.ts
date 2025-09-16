@@ -8,6 +8,7 @@ export interface AgentLibraryItem {
   tools: string[]
   createdAt: string
   updatedAt: string
+  category: string | null
 }
 
 export interface CreateAgentLibraryRequest {
@@ -15,6 +16,7 @@ export interface CreateAgentLibraryRequest {
   description?: string | null
   customInstructions?: string | null
   tools?: string[]
+  category?: string | null
 }
 
 export interface UpdateAgentLibraryRequest {
@@ -22,6 +24,7 @@ export interface UpdateAgentLibraryRequest {
   description?: string | null
   customInstructions?: string | null
   tools?: string[]
+  category?: string | null
 }
 
 export interface WorkflowLibraryItem {
@@ -36,6 +39,7 @@ export interface WorkflowLibraryItem {
   enabled: boolean
   createdAt: string
   updatedAt: string
+  category: string | null
 }
 
 export interface CreateWorkflowLibraryRequest {
@@ -47,6 +51,7 @@ export interface CreateWorkflowLibraryRequest {
   webhookEventName?: string | null
   webhookConnectorType?: string | null
   enabled?: boolean
+  category?: string | null
 }
 
 export interface UpdateWorkflowLibraryRequest {

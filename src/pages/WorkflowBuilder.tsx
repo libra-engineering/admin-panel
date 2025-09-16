@@ -118,6 +118,7 @@ export default function WorkflowBuilder() {
   const params = useParams()
   const workflowId = params?.id as string | undefined
   const [workflowName, setWorkflowName] = useState<string>('Untitled Workflow')
+  const [category, setCategory] = useState<string>('')
   const [toolPreference, setToolPreference] = useState<'workflow' | 'all'>('all')
   const [nodes, setNodes] = useState<Node[]>([])
   const [edges, setEdges] = useState<Edge[]>([])
@@ -131,6 +132,7 @@ export default function WorkflowBuilder() {
       try {
         const wf = await libraryApi.getWorkflowTemplate(workflowId)
         if (wf?.name) setWorkflowName(wf.name)
+        if (wf?.category) setCategory(wf.category)
         if (Array.isArray(wf?.nodes)) setNodes(wf.nodes as any)
         if (Array.isArray(wf?.edges)) setEdges(wf.edges as any)
         if (wf?.toolPreference && (wf.toolPreference === 'all' || wf.toolPreference === 'workflow')) setToolPreference(wf.toolPreference as any)
@@ -256,6 +258,7 @@ export default function WorkflowBuilder() {
       ...(webhookEventName ? { webhookEventName } : {}),
       ...(webhookConnectorType ? { webhookConnectorType } : {}),
       enabled: true,
+      category: category.trim() || null,
     }
 
     try {
@@ -369,6 +372,8 @@ export default function WorkflowBuilder() {
               <option value="all">All Tools</option>
             </select>
           </div>
+          <Input label="Category" value={category} onChange={(e) => setCategory(e.target.value)} />
+
         </CardContent>
       </Card>
 
