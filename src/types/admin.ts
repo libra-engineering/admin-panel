@@ -236,6 +236,19 @@ export interface ToolPromptUpdateResponse {
   connectorType: string
 }
 
+export interface CreateToolPromptRequest {
+  toolName: string
+  promptTemplate: string
+  description?: string
+}
+
+export interface CreateToolPromptResponse {
+  success: boolean
+  toolName: string
+  connectorType: string
+  message?: string
+}
+
 // Prompt Management Types
 export interface Prompt {
   id: string

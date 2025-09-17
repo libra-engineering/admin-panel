@@ -11,6 +11,18 @@ interface AgentListProps {
 }
 
 const AgentList: React.FC<AgentListProps> = ({ agents, isLoading, onCreateAgent, onEditAgent, onDeleteAgent }) => {
+
+  const formatToolName = (raw: string): string => {
+    const withSpaces = raw
+      .replace(/[_-]+/g, ' ')
+      .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    return withSpaces
+      .split(' ')
+      .filter(Boolean)
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ')
+  }
+
   if (isLoading) {
     return (
       <div className="p-6">Loading…</div>
@@ -48,7 +60,7 @@ const AgentList: React.FC<AgentListProps> = ({ agents, isLoading, onCreateAgent,
                 )}
               </td>
               <td className="px-6 py-3 text-sm text-left text-gray-700">{
-                agent.tools && agent.tools?.length > 3 ? agent.tools.slice(0,3).join(', ') + '...' : '—'
+                agent.tools && agent.tools?.length > 3 ? formatToolName(agent.tools.slice(0,3).join(', ')) + '...' : '—'
                 }</td>
               <td className="px-6 py-3 text-sm text-left text-gray-700">{new Date(agent.updatedAt).toLocaleString()}</td>
               <td className="px-6 py-3">

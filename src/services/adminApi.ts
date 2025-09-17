@@ -11,6 +11,8 @@ import type {
   ToolPromptResponse,
   ToolPromptUpdateRequest,
   ToolPromptUpdateResponse,
+  CreateToolPromptRequest,
+  CreateToolPromptResponse,
   Prompt,
   CreatePromptRequest,
   UpdatePromptRequest,
@@ -144,6 +146,14 @@ export const adminApi = {
     data: ToolPromptUpdateRequest
   ): Promise<ToolPromptUpdateResponse> {
     const response = await api.put(`${API_BASE}/tools/${toolName}/${connectorType}`, data)
+    return response.data
+  },
+
+  async createToolPrompt(
+    connectorType: string,
+    data: CreateToolPromptRequest
+  ): Promise<CreateToolPromptResponse> {
+    const response = await api.post(`${API_BASE}/tools/org/${encodeURIComponent(connectorType)}`, data)
     return response.data
   },
 

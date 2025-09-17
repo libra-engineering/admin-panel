@@ -87,7 +87,7 @@ export default function OrganizationsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>
+          <CardTitle className="text-left">
             All Organizations ({filteredOrganizations.length})
           </CardTitle>
         </CardHeader>

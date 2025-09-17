@@ -178,6 +178,16 @@ export const libraryApi = {
   async deleteAgentTemplate(id: string): Promise<void> {
     await api.delete(`${API_BASE}/library/agents/${id}`)
   },
+  async searchAgentTemplates(q: string, opts?: { limit?: number; category?: string }): Promise<AgentLibraryItem[]> {
+    const res = await api.get('/library/agents/search', {
+      params: {
+        q,
+        limit: opts?.limit,
+        category: opts?.category,
+      },
+    })
+    return res.data
+  },
 
   // Workflows
   async listWorkflowTemplates(): Promise<WorkflowLibraryItem[]> {
@@ -197,6 +207,16 @@ export const libraryApi = {
   },
   async getWorkflowTemplate(id: string): Promise<WorkflowLibraryItem> {
     const res = await api.get(`/admin/library/workflows/${id}`)
+    return res.data
+  },
+  async searchWorkflowTemplates(q: string, opts?: { limit?: number; category?: string }): Promise<WorkflowLibraryItem[]> {
+    const res = await api.get('/library/workflows/search', {
+      params: {
+        q,
+        limit: opts?.limit,
+        category: opts?.category,
+      },
+    })
     return res.data
   },
 }

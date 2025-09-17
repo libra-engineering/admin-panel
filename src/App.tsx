@@ -11,6 +11,7 @@ import ConnectorsPage from '@/pages/ConnectorsPage'
 import ToolsPage from '@/pages/ToolsPage'
 import PromptsPage from '@/pages/PromptsPage'
 import PromptEditor from '@/pages/PromptEditor'
+import ToolEditor from '@/pages/ToolEditor'
 import LogsPage from '@/pages/LogsPage'
 import { ROUTES } from '@/lib/constants'
 import './App.css'
@@ -56,6 +57,7 @@ const AppContent = () => {
             <Route path="token-usage" element={<TokenUsagePage />} />
             <Route path="connectors" element={<ConnectorsPage />} />
             <Route path="tools" element={<ToolsPage />} />
+            <Route path="tools/editor/:toolKey" element={<ToolEditor />} />
             <Route path="prompts/editor/:identifier" element={<PromptEditor />} />
             <Route path="prompts" element={<PromptsPage />} />
             <Route path="logs" element={<LogsPage />} />
