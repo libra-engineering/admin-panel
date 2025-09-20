@@ -27,7 +27,8 @@ import type {
   RevertPromptResponse,
   Connector,
   ConnectorsResponse,
-  EnvConfig
+  EnvConfig,
+  BulkToolPromptsCsvResponse
 } from '../types/admin'
 
 const API_BASE = '/admin'
@@ -154,6 +155,15 @@ export const adminApi = {
     data: CreateToolPromptRequest
   ): Promise<CreateToolPromptResponse> {
     const response = await api.post(`${API_BASE}/tools/org/${encodeURIComponent(connectorType)}`, data)
+    return response.data
+  },
+
+  async bulkCreateToolPromptsFromCsv(file: File): Promise<BulkToolPromptsCsvResponse> {
+    const form = new FormData()
+    form.append('file', file)
+    const response = await api.post(`${API_BASE}/tools/bulk-create`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
     return response.data
   },
 

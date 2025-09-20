@@ -8,12 +8,16 @@ import { Badge } from '../components/ui/badge'
 import { adminApi } from '../services/adminApi'
 import { getToolIcon } from '../lib/icons'
 import type {  OrganizationToolPrompts } from '../types/admin'
+import { useRef } from 'react'
+import { toast } from 'sonner'
 
 export default function ToolsPage() {
   const navigate = useNavigate()
   const [toolPrompts, setToolPrompts] = useState<OrganizationToolPrompts>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
   
   // Search and filter states
   const [searchQuery, setSearchQuery] = useState('')
@@ -105,6 +109,31 @@ export default function ToolsPage() {
     navigate(`/admin/tools/editor/${toolName}:${connectorType}`)
   }
 
+  const handleBulkCreateClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleCsvSelected: React.ChangeEventHandler<HTMLInputElement> = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const res = await adminApi.bulkCreateToolPromptsFromCsv(file)
+      const totals = res?.totals
+      const created = totals?.created ?? 0
+      const skipped = totals?.skipped ?? 0
+      const invalid = totals?.invalid ?? 0
+      toast.success(`Tool prompts added: ${created} created, ${skipped} skipped, ${invalid} invalid`)
+      await fetchToolPrompts()
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Bulk create tools failed'
+      toast.error(msg)
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -119,6 +148,20 @@ export default function ToolsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Tool Prompts Management</h1>
         <div className="flex items-center space-x-3">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,text/csv"
+            className="hidden"
+            onChange={handleCsvSelected}
+          />
+          <Button
+            onClick={handleBulkCreateClick}
+            variant="outline"
+            disabled={uploading}
+          >
+            {uploading ? 'Uploading…' : 'Bulk Create (CSV)'}
+          </Button>
           <Button
             onClick={handleCreate}
             className="bg-blue-600 hover:bg-blue-700"

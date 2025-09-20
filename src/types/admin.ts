@@ -249,6 +249,28 @@ export interface CreateToolPromptResponse {
   message?: string
 }
 
+// Bulk Tool Prompt CSV types
+export interface BulkToolPromptsCsvItem {
+  toolName: string
+  connectorType: string
+}
+
+export interface BulkToolPromptsCsvTotals {
+  rows: number
+  created: number
+  skipped: number
+  invalid: number
+}
+
+export interface BulkToolPromptsCsvResponse {
+  success: boolean
+  organizationId: string
+  totals: BulkToolPromptsCsvTotals
+  created: BulkToolPromptsCsvItem[]
+  skipped: BulkToolPromptsCsvItem[]
+  invalid: BulkToolPromptsCsvItem[]
+}
+
 // Prompt Management Types
 export interface Prompt {
   id: string
