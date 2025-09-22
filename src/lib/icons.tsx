@@ -27,6 +27,7 @@ import StripePng from '../assets/stripe.png'
 import ZendeskPng from '../assets/zendesk.png'
 import SentryPng from '../assets/sentry.png'
 import DiscordPng from '../assets/discord.png'
+import {  Settings2 } from "lucide-react"
 
 export function getToolIcon(connectorName: string): React.ReactElement {
 
@@ -89,6 +90,6 @@ export function getToolIcon(connectorName: string): React.ReactElement {
     case 'newrelic':
       return <img src={NewRelicPng} alt="Connector Icon" className="w-5 h-5" />
     default:
-      return <img src={slackPng} alt="Default" className="w-5 h-5" />
+      return <Settings2 className="w-5 h-5"/>
   }
 } 

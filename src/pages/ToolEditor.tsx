@@ -73,8 +73,13 @@ export default function ToolEditor() {
         // setAllToolPrompts(resp.toolPrompts || {});
 
         const meta = await adminApi.getConnectorsMetadata();
+        const coreTools = [{
+          type: "core",
+          tools: [],
+          webhookEvents: [],
+        }]
         const connectorTools: string[] = (meta.connectors || []).map((c: any) => c.type);
-        setAvailableConnectorTypes(connectorTools);
+        setAvailableConnectorTypes([...connectorTools, ...coreTools.map((c: any) => c.type)]);
         if (!isCreationMode && toolKey) {
           const [tName, cType] = toolKey.split(":");
           setToolName(tName);
