@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Card,
@@ -15,6 +15,7 @@ import type {
   Prompt,
   PromptTestRequest,
 } from "../types/admin";
+import { toast } from "sonner";
 
 
 
@@ -29,17 +30,15 @@ export default function PromptsPage() {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const [uploading, setUploading] = useState(false)
+
 
   // Search and filter states
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<string>("all");
 
-  // Modal states (only for create and test)
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showTestModal, setShowTestModal] = useState(false);
-  const [testData, setTestData] = useState<TestModalData | null>(null);
 
-  const [testing, setTesting] = useState(false);
 
   useEffect(() => {
     fetchPrompts();
@@ -58,6 +57,32 @@ export default function PromptsPage() {
       setLoading(false);
     }
   };
+
+  const handleBulkCreateClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleCsvSelected: React.ChangeEventHandler<HTMLInputElement> = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const res = await adminApi.bulkImortPrompts(file)
+      const totals = res?.totals
+      const created = totals?.created ?? 0
+      const skipped = totals?.skipped ?? 0
+      const invalid = totals?.invalid ?? 0
+      toast.success(`Prompts imported: ${created} imported, ${skipped} skipped, ${invalid} invalid`)
+      await fetchPrompts()
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Bulk import prompts failed'
+      toast.error(msg)
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+  
 
   // Filter and search logic
   const filteredPrompts = useMemo(() => {
@@ -88,76 +113,7 @@ export default function PromptsPage() {
     navigate(`/admin/prompts/editor/${prompt.identifier}`);
   };
 
-  const handleTest = (prompt: Prompt) => {
-    setTestData({
-      prompt,
-      variables: prompt.variables || {},
-      result: null,
-    });
-    setShowTestModal(true);
-  };
-
-
-
-  const handleDelete = async (prompt: Prompt) => {
-    if (
-      !confirm(`Are you sure you want to delete the prompt "${prompt.name}"?`)
-    ) {
-      return;
-    }
-
-    try {
-      setError(null);
-      await adminApi.deletePrompt(prompt.id);
-      await fetchPrompts();
-    } catch (error: any) {
-      console.error("Failed to delete prompt:", error);
-      setError(error.response?.data?.error || "Failed to delete prompt");
-    }
-  };
-
-  const handleTestPrompt = async () => {
-    if (!testData) return;
-
-    try {
-      setTesting(true);
-      const testRequest: PromptTestRequest = {
-        variables: testData.variables,
-      };
-      const response = await adminApi.testPrompt(
-        testData.prompt.id,
-        testRequest
-      );
-      setTestData((prev) =>
-        prev ? { ...prev, result: response.renderedPrompt } : null
-      );
-    } catch (error: any) {
-      console.error("Failed to test prompt:", error);
-      setError(error.response?.data?.error || "Failed to test prompt");
-    } finally {
-      setTesting(false);
-    }
-  };
-
-  const handleClearCache = async () => {
-    try {
-      setError(null);
-      await adminApi.clearPromptCache();
-      // Show success message or toast
-      alert("Cache cleared successfully");
-    } catch (error: any) {
-      console.error("Failed to clear cache:", error);
-      setError(error.response?.data?.error || "Failed to clear cache");
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Loading prompts...</div>
-      </div>
-    );
-  }
+  
 
   return (
     <div className="p-6 space-y-6">
@@ -172,9 +128,21 @@ export default function PromptsPage() {
           >
             Clear Cache
           </Button> */}
-          {/* <Button onClick={fetchPrompts} disabled={loading} variant="outline">
-            Refresh
-          </Button> */}
+          
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,text/csv"
+            className="hidden"
+            onChange={handleCsvSelected}
+          />
+          <Button
+            onClick={handleBulkCreateClick}
+            variant="outline"
+            disabled={uploading}
+          >
+            {uploading ? 'Uploading…' : 'Import Prompts (CSV)'}
+          </Button>
           <Button
             onClick={handleCreate}
             className="bg-blue-600 hover:bg-blue-700"

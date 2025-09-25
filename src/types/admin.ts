@@ -271,6 +271,11 @@ export interface BulkToolPromptsCsvResponse {
   invalid: BulkToolPromptsCsvItem[]
 }
 
+export interface BulkImportPromptsCsvResponse {
+  success: boolean
+  totals: BulkToolPromptsCsvTotals
+}
+
 // Prompt Management Types
 export interface Prompt {
   id: string

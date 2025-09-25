@@ -28,7 +28,8 @@ import type {
   Connector,
   ConnectorsResponse,
   EnvConfig,
-  BulkToolPromptsCsvResponse
+  BulkToolPromptsCsvResponse,
+  BulkImportPromptsCsvResponse
 } from '../types/admin'
 
 const API_BASE = '/admin'
@@ -205,6 +206,15 @@ export const adminApi = {
 
   async clearPromptCache(data: ClearCacheRequest = {}): Promise<{ message: string }> {
     const response = await api.post(`${API_BASE}/prompts/cache/clear`, data)
+    return response.data
+  },
+
+  async bulkImortPrompts(file: File): Promise<BulkImportPromptsCsvResponse> {
+    const form = new FormData()
+    form.append('file', file)
+    const response = await api.post(`${API_BASE}/prompts/bulk-create`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
     return response.data
   },
 
