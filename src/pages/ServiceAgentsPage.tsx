@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef, useImperativeHandle } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -25,11 +25,18 @@ export default function ServiceAgentsPage() {
 
   const activeSelectedCategory = activeTab === 'agents' ? agentSelectedCategory : wfSelectedCategory;
 
+  const agentsTabRef = useRef<{ refreshData: () => void }>(null);
+  const workflowsTabRef = useRef<{ refreshData: () => void }>(null);
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Agents & Workflows</h1>
-        <Button onClick={() => setPageModal('bulkImport')}>Bulk CSV Import</Button>
+        {
+          activeTab === 'agents' ?
+          <Button onClick={() => setPageModal('bulkImport')}>Bulk CSV Import</Button>
+        : <Button onClick={() => setPageModal('bulkImportWF')}>Bulk CSV Import</Button>
+        }
       </div>
 
       <div className="border-b border-gray-200">
@@ -92,6 +99,7 @@ export default function ServiceAgentsPage() {
 
       {activeTab === "agents" ? (
         <AgentsTab
+          ref={agentsTabRef}
           query={query}
           onSearchingChange={setIsAgentSearching}
           selectedCategory={agentSelectedCategory}
@@ -99,6 +107,7 @@ export default function ServiceAgentsPage() {
         />
       ) : (
         <WorkflowsTab
+          ref={workflowsTabRef}
           query={query}
           onSearchingChange={setIsWfSearching}
           selectedCategory={wfSelectedCategory}
@@ -113,6 +122,8 @@ export default function ServiceAgentsPage() {
         onAgentCreated={() => setPageModal(null)}
         onAgentUpdated={() => setPageModal(null)}
         onAgentDeleted={() => setPageModal(null)}
+        onBulkImportSuccess={() => agentsTabRef.current?.refreshData()}
+        onBulkImportWFSuccess={() => workflowsTabRef.current?.refreshData()}
       />
     </div>
   );
@@ -120,7 +131,7 @@ export default function ServiceAgentsPage() {
 
 
 
-function AgentsTab({ query, onSearchingChange, selectedCategory, onSelectedCategoryChange }: { query: string; onSearchingChange: (v: boolean) => void; selectedCategory: string; onSelectedCategoryChange: (v: string) => void }) {
+const AgentsTab = React.forwardRef<{ refreshData: () => void }, { query: string; onSearchingChange: (v: boolean) => void; selectedCategory: string; onSelectedCategoryChange: (v: string) => void }>(function AgentsTab({ query, onSearchingChange, selectedCategory, onSelectedCategoryChange }, ref) {
   const [items, setItems] = useState<ServiceAgent[]>([]);
   const [baseItems, setBaseItems] = useState<ServiceAgent[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -186,6 +197,10 @@ function AgentsTab({ query, onSearchingChange, selectedCategory, onSelectedCateg
       setLoading(false);
     }
   };
+
+  useImperativeHandle(ref, () => ({
+    refreshData: fetchItems
+  }));
 
   const allCategories = useMemo(() => {
     const cats = new Set<string>();
@@ -327,9 +342,9 @@ function AgentsTab({ query, onSearchingChange, selectedCategory, onSelectedCateg
       />
     </div>
   );
-}
+});
 
-function WorkflowsTab({ query, onSearchingChange, selectedCategory, onSelectedCategoryChange }: { query: string; onSearchingChange: (v: boolean) => void; selectedCategory: string; onSelectedCategoryChange: (v: string) => void }) {
+const WorkflowsTab = React.forwardRef<{ refreshData: () => void }, { query: string; onSearchingChange: (v: boolean) => void; selectedCategory: string; onSelectedCategoryChange: (v: string) => void }>(function WorkflowsTab({ query, onSearchingChange, selectedCategory, onSelectedCategoryChange }, ref) {
   const [items, setItems] = useState<WorkflowLibraryItem[]>([]);
   const [baseItems, setBaseItems] = useState<WorkflowLibraryItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -392,6 +407,10 @@ function WorkflowsTab({ query, onSearchingChange, selectedCategory, onSelectedCa
       setLoading(false);
     }
   };
+
+  useImperativeHandle(ref, () => ({
+    refreshData: fetchItems
+  }));
 
   const wfAllCategories = useMemo(() => {
     const cats = new Set<string>();
@@ -506,4 +525,4 @@ function WorkflowsTab({ query, onSearchingChange, selectedCategory, onSelectedCa
       </Card>
     </div>
   );
-} 
+}); 

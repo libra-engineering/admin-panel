@@ -17,7 +17,7 @@ interface ServiceAgent {
   updatedAt: string;
 }
 
-export type ServiceAgentModalType = 'create' | 'edit' | 'delete' | 'bulkImport' | null
+export type ServiceAgentModalType = 'create' | 'edit' | 'delete' | 'bulkImport' | 'bulkImportWF' | null
 
 interface ServiceAgentModalManagerProps {
   activeModal: ServiceAgentModalType
@@ -26,6 +26,8 @@ interface ServiceAgentModalManagerProps {
   onAgentCreated: (agent: ServiceAgent) => void
   onAgentUpdated: (agent: ServiceAgent) => void
   onAgentDeleted: (id: string) => void
+  onBulkImportSuccess?: () => void
+  onBulkImportWFSuccess?: () => void
 }
 
 const ModalBase: React.FC<{ title: string; onClose: () => void; children: React.ReactNode; footer: React.ReactNode; }>
@@ -265,6 +267,61 @@ const ServiceAgentBulkImportModal: React.FC<{ onClose: () => void; onSuccess: ()
   )
 }
 
+const ServiceAgentBulkImportWFModal: React.FC<{ onClose: () => void; onSuccess: () => void }>
+  = ({ onClose, onSuccess }) => {
+  const [bulkCsvUploading, setBulkCsvUploading] = useState(false)
+
+  return (
+    <ModalBase
+      title="Bulk Import CSV"
+      onClose={onClose}
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <div className="rounded-lg border border-gray-200 bg-muted/30">
+          <div className="px-4 py-3 flex items-center justify-between">
+            <div className='text-left'>
+              <div className="block text-[13px] font-medium text-foreground">Upload CSV</div>
+            </div>
+          </div>
+           
+          <div className="p-4 space-y-3">
+            <div className="flex items-center gap-3">
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                disabled={bulkCsvUploading}
+                onChange={async e => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  try {
+                    setBulkCsvUploading(true)
+                    await serviceApi.bulkImportWorkflows(file)
+                    toast.success('Bulk workflows imported successfully')
+                    onSuccess()
+                    onClose()
+                  } catch (err: any) {
+                    const msg = err?.response?.data?.message || err?.message || 'Bulk import failed'
+                    toast.error(msg)
+                  } finally {
+                    setBulkCsvUploading(false)
+                    e.currentTarget.value = ''
+                  }
+                }}
+                className="text-xs file:mr-3 file:rounded-md file:border file:border-border file:bg-background file:px-3 file:py-1.5 file:text-foreground hover:file:bg-muted/50 disabled:opacity-50"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </ModalBase>
+  )
+}
+
 const ServiceAgentEditModal: React.FC<{ agent: ServiceAgent; onClose: () => void; onSuccess: (agent: ServiceAgent) => void }>
   = ({ agent, onClose, onSuccess }) => {
   const [name, setName] = useState(agent.name)
@@ -361,7 +418,7 @@ const ServiceAgentDeleteModal: React.FC<{ agent: ServiceAgent; onClose: () => vo
   )
 }
 
-const ServiceAgentModalManager: React.FC<ServiceAgentModalManagerProps> = ({ activeModal, selectedAgent, onClose, onAgentCreated, onAgentUpdated, onAgentDeleted }) => {
+const ServiceAgentModalManager: React.FC<ServiceAgentModalManagerProps> = ({ activeModal, selectedAgent, onClose, onAgentCreated, onAgentUpdated, onAgentDeleted, onBulkImportSuccess, onBulkImportWFSuccess }) => {
   if (!activeModal) return null
   
   if (activeModal === 'create') {
@@ -395,7 +452,18 @@ const ServiceAgentModalManager: React.FC<ServiceAgentModalManagerProps> = ({ act
       <ServiceAgentBulkImportModal
         onClose={onClose}
         onSuccess={() => {
-          // Refresh will be handled by parent component
+          onBulkImportSuccess?.()
+          onClose()
+        }}
+      />
+    )
+  }
+  if (activeModal === 'bulkImportWF') {
+    return (
+      <ServiceAgentBulkImportWFModal
+        onClose={onClose}
+        onSuccess={() => {
+          onBulkImportWFSuccess?.()
           onClose()
         }}
       />

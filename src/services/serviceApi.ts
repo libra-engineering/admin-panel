@@ -268,6 +268,20 @@ class ServiceApiClient {
     });
   }
 
+  async bulkImportWorkflows(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const authHeader = this.getAuthHeader();
+    const response = await fetch(`${this.baseURL}/admin/workflows/bulk-import`, {
+      method: 'POST',
+      headers: {
+        ...(authHeader && { Authorization: authHeader }),
+      },
+      body: formData,
+    });
+  }
+
   // Tool Prompts management
   async getToolPrompts() {
     return this.request('/admin/tool-prompts');

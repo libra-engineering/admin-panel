@@ -43,7 +43,7 @@ interface ServiceWorkflow {
   name: string;
   category: string;
   nodes: any[];
-  edges: any[];
+  dges: any[];
   toolPreference: 'workflow' | 'all';
   webhookEventName?: string;
   webhookConnectorType?: string;
@@ -143,7 +143,7 @@ export default function ServiceWorkflowBuilder() {
         if (wf?.name) setWorkflowName(wf.name)
         if (wf?.category) setCategory(wf.category)
         if (Array.isArray(wf?.nodes)) setNodes(wf.nodes as any)
-        if (Array.isArray(wf?.edges)) setEdges(wf.edges as any)
+        if (Array.isArray(wf?.dges)) setEdges(wf.dges as any)
         if (wf?.toolPreference && (wf.toolPreference === 'all' || wf.toolPreference === 'workflow')) setToolPreference(wf.toolPreference as any)
       } catch (e) {
         console.error('Failed to load workflow', e)
