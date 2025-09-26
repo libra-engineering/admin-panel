@@ -370,5 +370,26 @@ export const adminApi = {
   async getPromptTokenSize(identifier: string): Promise<import('../types/admin').PromptTokenSizeResponse> {
     const response = await api.get(`${API_BASE}/prompts/token-size/${encodeURIComponent(identifier)}`)
     return response.data
+  },
+
+  // Admin Environment Variables
+  async getAdminEnvVariables(): Promise<any[]> {
+    const response = await api.get(`${API_BASE}/config`)
+    return response.data
+  },
+
+  async createAdminEnvVariable(envVar: { key: string; value: string; description?: string }): Promise<any> {
+    const response = await api.post(`${API_BASE}/config`, envVar)
+    return response.data
+  },
+
+  async updateAdminEnvVariable(key: string, value: string): Promise<any> {
+    const response = await api.put(`${API_BASE}/config/${key}`, { value })
+    return response.data
+  },
+
+  async deleteAdminEnvVariable(key: string): Promise<{ message: string }> {
+    const response = await api.delete(`${API_BASE}/config/${key}`)
+    return response.data
   }
 } 

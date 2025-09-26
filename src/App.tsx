@@ -37,6 +37,7 @@ import { ServiceProtectedRoute } from '@/components/auth/ServiceProtectedRoute'
 import AgentsPage from './pages/AgentsPage'
 import WorkflowBuilder from './pages/WorkflowBuilder'
 import OrganizationConfigPage from '@/pages/OrganizationConfigPage'
+import AdminEnvPage from '@/pages/AdminEnvPage'
 
 // App component with authentication logic
 const AppContent = () => {
@@ -80,6 +81,7 @@ const AppContent = () => {
             <Route path="prompts" element={<PromptsPage />} />
             <Route path="logs" element={<LogsPage />} />
             <Route path="organizations/:organizationId/config" element={<OrganizationConfigPage />} />
+            <Route path="env" element={<AdminEnvPage />} />
             <Route path='agents' element={<AgentsPage />} />
             <Route path='workflows/new' element={<WorkflowBuilder />} />
             <Route path='workflows/:id' element={<WorkflowBuilder />} />

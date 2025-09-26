@@ -20,6 +20,7 @@ export const ROUTES = {
   TOOLS: '/admin/tools',
   PROMPT: '/admin/prompts',
   PROMPT_EDITOR: '/admin/prompts/editor/:identifier',
+  ADMIN_ENV: '/admin/env',
   SERVICE_LOGIN: '/service/login',
   SERVICE_DASHBOARD: '/service/analytics',
   SERVICE_ENV_VARIABLES: '/service/env-variables',

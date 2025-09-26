@@ -50,6 +50,7 @@ export default function AdminLayout() {
       icon: <MessageCircle />,
     },
     { name: 'Agents', href: '/admin/agents', icon: <Bot /> },
+    {name: 'Env', href: '/admin/env', icon: <ServerCogIcon />},
 
   ];
 
