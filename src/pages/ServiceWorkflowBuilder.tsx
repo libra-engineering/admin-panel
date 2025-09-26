@@ -39,6 +39,16 @@ function TriggerNode({ data }: NodeProps) {
   )
 }
 
+interface ServiceWorkflow {
+  name: string;
+  category: string;
+  nodes: any[];
+  edges: any[];
+  toolPreference: 'workflow' | 'all';
+  webhookEventName?: string;
+  webhookConnectorType?: string;
+}
+
 function GoalNode({ data }: NodeProps) {
   const nodeData = (data || {}) as { label?: string }
   return (
@@ -129,7 +139,7 @@ export default function ServiceWorkflowBuilder() {
     if (!workflowId) return
     ;(async () => {
       try {
-        const wf = await serviceApi.getWorkflow(workflowId)
+        const wf = await serviceApi.getWorkflow(workflowId) as ServiceWorkflow
         if (wf?.name) setWorkflowName(wf.name)
         if (wf?.category) setCategory(wf.category)
         if (Array.isArray(wf?.nodes)) setNodes(wf.nodes as any)
@@ -250,7 +260,7 @@ export default function ServiceWorkflowBuilder() {
         await serviceApi.updateWorkflow(workflowId, payload)
         toast.success('Workflow updated')
       } else {
-        const created = await serviceApi.createWorkflow(payload)
+        const created = await serviceApi.createWorkflow(payload) as ServiceWorkflow
         toast.success(`Workflow "${created.name}" created`)
       }
       navigate('/service/agents?tab=workflows')
