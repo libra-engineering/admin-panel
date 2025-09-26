@@ -19,6 +19,7 @@ import ServiceLayout from '@/components/layout/ServiceLayout'
 import ServiceEnvVariablesPage from '@/pages/ServiceEnvVariablesPage'
 import ServiceAnalyticsPage from '@/pages/ServiceAnalyticsPage'
 import ServiceOrganizationsPage from '@/pages/ServiceOrganizationsPage'
+import ServiceOrganizationDetailsPage from '@/pages/ServiceOrganizationDetailsPage'
 import ServiceApiKeysPage from '@/pages/ServiceApiKeysPage'
 import ServiceUsersPage from '@/pages/ServiceUsersPage'
 import ServicePromptsPage from '@/pages/ServicePromptsPage'
@@ -136,6 +137,7 @@ const AppContent = () => {
             <Route path="env-variables" element={<ServiceEnvVariablesPage />} />
             <Route path="analytics" element={<ServiceAnalyticsPage />} />
             <Route path="organizations" element={<ServiceOrganizationsPage />} />
+            <Route path="organizations/:id" element={<ServiceOrganizationDetailsPage />} />
             <Route path="api-keys" element={<ServiceApiKeysPage />} />
             <Route path="users" element={<ServiceUsersPage />} />
             <Route path="prompts" element={<ServicePromptsPage />} />

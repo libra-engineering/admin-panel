@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { serviceApi } from '@/services/serviceApi';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,36 +8,21 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Building2, 
   Search, 
-  RefreshCw, 
   AlertCircle, 
-  Eye, 
-  Users, 
-  Calendar, 
-  Activity,
-  Globe,
-  Mail,
-  Phone,
   Plus,
   Save,
   X,
-  CheckCircle,
-  ArrowLeft
+  CheckCircle
 } from 'lucide-react';
 
 interface Organization {
-  id: string;
+  id: number;
   name: string;
   domain?: string;
-  email?: string;
-  phone?: string;
-  website?: string;
-  status: 'active' | 'inactive' | 'suspended';
-  userCount: number;
-  apiKeyCount: number;
   seats: number;
+  active: boolean;
   createdAt: string;
   updatedAt: string;
-  lastActivity?: string;
 }
 
 interface CreateOrgForm {
@@ -45,14 +31,17 @@ interface CreateOrgForm {
   seats: number;
 }
 
+
+
+
+
 export default function ServiceOrganizationsPage() {
+  const navigate = useNavigate();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [filteredOrganizations, setFilteredOrganizations] = useState<Organization[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
-  const [showDetails, setShowDetails] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
@@ -93,18 +82,6 @@ export default function ServiceOrganizationsPage() {
     }
   };
 
-  const fetchOrganizationDetails = async (id: string) => {
-    try {
-      setError(null);
-      const orgDetails = await serviceApi.getOrganizationById(id) as Organization;
-      setSelectedOrg(orgDetails);
-      setShowDetails(true);
-    } catch (error) {
-      console.error('Failed to fetch organization details:', error);
-      setError(error instanceof Error ? error.message : 'Failed to fetch organization details');
-    }
-  };
-
   const handleCreateOrganization = async () => {
     if (!createForm.name || !createForm.domain || createForm.seats < 1) {
       setError('Please fill in all required fields with valid values');
@@ -139,165 +116,19 @@ export default function ServiceOrganizationsPage() {
     if (success) setSuccess(null);
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <Badge variant="success">Active</Badge>;
-      case 'inactive':
-        return <Badge variant="warning">Inactive</Badge>;
-      case 'suspended':
-        return <Badge variant="error">Suspended</Badge>;
-      default:
-        return <Badge variant="default">{status}</Badge>;
-    }
+  const getStatusBadge = (active: boolean) => {
+    return active ? 
+      <Badge variant="success">Active</Badge> : 
+      <Badge variant="error">Inactive</Badge>;
   };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
   };
 
-  if (showDetails && selectedOrg) {
-    return (
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowDetails(false);
-                setSelectedOrg(null);
-              }}
-              >
-              <ArrowLeft />
-              Back 
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-                {selectedOrg.name}
-              </h1>
-              <p className="text-gray-600 mt-1">Organization Details</p>
-            </div>
-          </div>
-          {getStatusBadge(selectedOrg.status)}
-        </div>
 
-        {/* Organization Details */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Info */}
-          <div className="lg:col-span-2">
-            <Card>
-              <div className="p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Organization Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Organization ID</p>
-                    <p className="text-sm text-gray-900 font-mono">{selectedOrg.id}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Name</p>
-                    <p className="text-sm text-gray-900">{selectedOrg.name}</p>
-                  </div>
-                  {selectedOrg.domain && (
-                    <div>
-                      <p className="text-sm font-medium text-gray-500 flex items-center">
-                        Domain
-                      </p>
-                      <p className="text-sm text-gray-900">{selectedOrg.domain}</p>
-                    </div>
-                  )}
-                 
-                  {selectedOrg.website && (
-                    <div>
-                      <p className="text-sm font-medium text-gray-500 flex items-center">
-                        Website
-                      </p>
-                      <a 
-                        href={selectedOrg.website} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue-600 hover:text-blue-500"
-                      >
-                        {selectedOrg.website}
-                      </a>
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-sm font-medium text-gray-500 flex items-center">
-                      Created
-                    </p>
-                    <p className="text-sm text-gray-900">{formatDate(selectedOrg.createdAt)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500 flex items-center">
-                      Last Updated
-                    </p>
-                    <p className="text-sm text-gray-900">{formatDate(selectedOrg.updatedAt)}</p>
-                  </div>
-                  {selectedOrg.lastActivity && (
-                    <div>
-                      <p className="text-sm font-medium text-gray-500 flex items-center">
-                        Last Activity
-                      </p>
-                      <p className="text-sm text-gray-900">{formatDate(selectedOrg.lastActivity)}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </Card>
-          </div>
 
-          {/* Stats */}
-          <div className="space-y-4">
-            <Card>
-              <div className="p-6">
-                <div className="flex items-center">
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">Total Users</p>
-                    <p className="text-2xl font-bold text-gray-900">{selectedOrg.userCount}</p>
-                  </div>
-                </div>
-              </div>
-            </Card>
 
-            <Card>
-              <div className="p-6">
-                <div className="flex items-center">
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">API Keys</p>
-                    <p className="text-2xl font-bold text-gray-900">{selectedOrg.apiKeyCount}</p>
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            <Card>
-              <div className="p-6">
-                <div className="flex items-center">
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">Seats</p>
-                    <p className="text-2xl font-bold text-gray-900">{selectedOrg.seats}</p>
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            <Card>
-              <div className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Status</p>
-                    <p className="text-lg font-semibold text-gray-900 capitalize">{selectedOrg.status}</p>
-                  </div>
-                  {getStatusBadge(selectedOrg.status)}
-                </div>
-              </div>
-            </Card>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -473,7 +304,9 @@ export default function ServiceOrganizationsPage() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Created
                       </th>
-                     
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -504,7 +337,11 @@ export default function ServiceOrganizationsPage() {
                       <td className="px-6 text-left py-4 whitespace-nowrap text-sm text-gray-500">
                         {formatDate(org.createdAt)}
                       </td>
-                      
+                      <td className="px-6 text-left py-4 whitespace-nowrap text-sm text-gray-500">
+                        <Button variant="outline" size="sm" onClick={() => navigate(`/service/organizations/${org.id}`)}>
+                          View
+                        </Button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

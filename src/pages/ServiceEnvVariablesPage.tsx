@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Edit2, Save, Settings, Trash2, X, Eye, EyeOff } from 'lucide-react';
+import { toast } from 'sonner';
 
 
 interface EnvVariable {
@@ -19,7 +20,6 @@ interface EnvVariable {
 export default function ServiceEnvVariablesPage() {
   const [envVariables, setEnvVariables] = useState<EnvVariable[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -38,7 +38,6 @@ export default function ServiceEnvVariablesPage() {
   const fetchEnvVariables = async () => {
     try {
       setIsLoading(true);
-      setError(null);
       const variables = await serviceApi.getEnvVariables() as EnvVariable[];
       setEnvVariables(variables);
       const apiKeyIds = variables
@@ -46,7 +45,7 @@ export default function ServiceEnvVariablesPage() {
       setMaskedVariables(new Set(apiKeyIds));
     } catch (error) {
       console.error('Failed to fetch environment variables:', error);
-      setError(error instanceof Error ? error.message : 'Failed to fetch environment variables');
+      toast.error(error instanceof Error ? error.message : 'Failed to fetch environment variables');
     } finally {
       setIsLoading(false);
     }
@@ -54,20 +53,20 @@ export default function ServiceEnvVariablesPage() {
 
   const handleCreate = async () => {
     if (!createForm.key || !createForm.value) {
-      setError('Key and value are required');
+      toast.error('Key and value are required');
       return;
     }
 
     try {
       setIsSubmitting(true);
-      setError(null);
       await serviceApi.createEnvVariable(createForm as { key: string; value: string });
       setCreateForm({ key: '', value: '' });
       setShowCreateForm(false);
+      toast.success('ENV created successfully');
       await fetchEnvVariables();
     } catch (error) {
       console.error('Failed to create environment variable:', error);
-      setError(error instanceof Error ? error.message : 'Failed to create environment variable');
+      toast.error(error instanceof Error ? error.message : 'Failed to create environment variable');
     } finally {
       setIsSubmitting(false);
     }
@@ -76,14 +75,14 @@ export default function ServiceEnvVariablesPage() {
   const handleUpdate = async (id: string) => {
     try {
       setIsSubmitting(true);
-      setError(null);
       await serviceApi.updateEnvVariable(id, editForm);
       setEditingId(null);
       setEditForm({});
+      toast.success('ENV updated successfully');
       await fetchEnvVariables();
     } catch (error) {
       console.error('Failed to update environment variable:', error);
-      setError(error instanceof Error ? error.message : 'Failed to update environment variable');
+      toast.error(error instanceof Error ? error.message : 'Failed to update environment variable');
     } finally {
       setIsSubmitting(false);
     }
@@ -95,12 +94,11 @@ export default function ServiceEnvVariablesPage() {
     }
 
     try {
-      setError(null);
       await serviceApi.deleteEnvVariable(id);
       await fetchEnvVariables();
     } catch (error) {
       console.error('Failed to delete environment variable:', error);
-      setError(error instanceof Error ? error.message : 'Failed to delete environment variable');
+      toast.error(error instanceof Error ? error.message : 'Failed to delete environment variable');
     }
   };
 
@@ -159,17 +157,7 @@ export default function ServiceEnvVariablesPage() {
         </div>
       </div>
 
-      {/* Error Message */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
-          <div className="flex">
-            <div className="ml-3">
-              <p className="text-sm text-red-600">{error}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
+      
       {/* Create Form */}
       {showCreateForm && (
         <Card>

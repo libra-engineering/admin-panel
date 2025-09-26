@@ -6,13 +6,66 @@ import {
   BarChart3, 
   Activity, 
   AlertCircle,
-  Calendar} from 'lucide-react';
+  Calendar,
+  Search,
+  Globe,
+  Users,
+  Building,
+  Mail} from 'lucide-react';
+
+// Purpose enum constants
+const PURPOSES = {
+  fc_search: 'FirstClass Search',
+  fc_scrape: 'FirstClass Scrape', 
+  tvly_search: 'Tavily Search',
+  tvly_scrape: 'Tavily Scrape',
+  apolloio_people_search: 'Apollo People Search',
+  apolloio_organization_search: 'Apollo Organization Search',
+  resend_email: 'Resend Email'
+} as const;
+
+const getPurposeIcon = (purpose: string) => {
+  switch (purpose) {
+    case 'fc_search':
+    case 'tvly_search':
+    case 'apolloio_people_search':
+    case 'apolloio_organization_search':
+      return <Search className="h-5 w-5" />;
+    case 'fc_scrape':
+    case 'tvly_scrape':
+      return <Globe className="h-5 w-5" />;
+    case 'resend_email':
+      return <Mail className="h-5 w-5" />;
+    default:
+      return <Activity className="h-5 w-5" />;
+  }
+};
+
+const getPurposeColor = (purpose: string) => {
+  switch (purpose) {
+    case 'fc_search':
+    case 'fc_scrape':
+      return 'text-purple-500';
+    case 'tvly_search':
+    case 'tvly_scrape':
+      return 'text-blue-500';
+    case 'apolloio_people_search':
+      return 'text-green-500';
+    case 'apolloio_organization_search':
+      return 'text-orange-500';
+    case 'resend_email':
+      return 'text-red-500';
+    default:
+      return 'text-gray-500';
+  }
+};
 
 interface AnalyticsOverview {
-  totalCreditsUsed: number;
+  totalCreditsUsed: string;
   usageByPurpose: Array<{
     purpose: string;
-    count: number;
+    totalCredits: string;
+    count: string;
   }>;
   totalOrganizations: string;
   apiKeys: {
@@ -22,13 +75,13 @@ interface AnalyticsOverview {
 }
 
 interface UsageEntry {
-  id: string;
-  endpoint: string;
-  method: string;
-  requests: number;
-  timestamp: string;
-  organizationId: string;
-  purpose?: string;
+  id: number;
+  creditsUsed: number;
+  purpose: string;
+  createdAt: string;
+  orgName: string;
+  orgId: number;
+  apiKeyId: number;
 }
 
 interface UsageResponse {
@@ -72,13 +125,18 @@ export default function ServiceAnalyticsPage() {
   };
 
 
-  const formatNumber = (num: number) => {
-    if (num >= 1000000) {
-      return (num / 1000000).toFixed(1) + 'M';
-    } else if (num >= 1000) {
-      return (num / 1000).toFixed(1) + 'K';
+  const formatNumber = (num: string | number) => {
+    const numValue = typeof num === 'string' ? parseInt(num) : num;
+    if (numValue >= 1000000) {
+      return (numValue / 1000000).toFixed(1) + 'M';
+    } else if (numValue >= 1000) {
+      return (numValue / 1000).toFixed(1) + 'K';
     }
-    return num.toString();
+    return numValue.toString();
+  };
+
+  const getPurposeName = (purpose: string) => {
+    return PURPOSES[purpose as keyof typeof PURPOSES] || purpose;
   };
 
   if (isLoading) {
@@ -168,18 +226,19 @@ export default function ServiceAnalyticsPage() {
         <Card>
           <div className="p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-              <BarChart3 className="h-5 w-5 mr-2" />
-              Usage by Purpose
+              Credits Usage by Purpose
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {overview.usageByPurpose.map((item, index) => (
-                <div key={index} className="bg-gray-50 rounded-lg p-4">
+                <div key={index} className="bg-gray-50 rounded-lg p-4 border-l-4 border-l-blue-400">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">{item.purpose}</p>
-                      <p className="text-xl font-bold text-gray-900">{formatNumber(item.count)}</p>
+                    <div className="flex-1">
+                      <div className="flex items-center mb-2">
+                        
+                        <p className="text-sm font-medium text-gray-700">{getPurposeName(item.purpose)}</p>
+                      </div>
+                      <p className="text-2xl font-bold text-gray-900">{formatNumber(item.totalCredits)} <span className="text-sm font-normal text-gray-500">credits</span></p>
                     </div>
-                    <Activity className="h-6 w-6 text-blue-500" />
                   </div>
                 </div>
               ))}
@@ -206,19 +265,16 @@ export default function ServiceAnalyticsPage() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Endpoint
+                      Purpose
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Method
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Requests
+                      Credits Used
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Organization
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Purpose
+                      API Key ID
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Timestamp
@@ -228,34 +284,25 @@ export default function ServiceAnalyticsPage() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {usage.map((metric) => (
                     <tr key={metric.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
-                        {metric.endpoint}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge 
-                          variant={
-                            metric.method === 'GET' ? 'info' : 
-                            metric.method === 'POST' ? 'success' : 
-                            metric.method === 'PUT' ? 'warning' : 
-                            metric.method === 'DELETE' ? 'error' : 'default'
-                          }
-                        >
-                          {metric.method}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatNumber(metric.requests)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {metric.organizationId}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {metric.purpose || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 text-left whitespace-nowrap">
                         <div className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-1" />
-                          {new Date(metric.timestamp).toLocaleString()}
+                          <Badge variant="default" className="font-mono">
+                            {getPurposeName(metric.purpose)}
+                          </Badge>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-left whitespace-nowrap text-sm text-gray-900">
+                        <span className="font-semibold">{metric.creditsUsed}</span> credits
+                      </td>
+                      <td className="px-6 py-4 text-left whitespace-nowrap text-sm text-gray-900">
+                        {metric.orgName} 
+                      </td>
+                      <td className="px-6 py-4 text-left whitespace-nowrap text-sm text-gray-900">
+                        {metric.apiKeyId}
+                      </td>
+                      <td className="px-6 py-4 text-left whitespace-nowrap text-sm text-gray-500">
+                        <div className="flex items-center">
+                          {new Date(metric.createdAt).toLocaleString()}
                         </div>
                       </td>
                     </tr>

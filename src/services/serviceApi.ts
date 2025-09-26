@@ -94,6 +94,13 @@ class ServiceApiClient {
     });
   }
 
+  async updateOrganization(id: string, orgData: { name: string; domain: string; seats: number }) {
+    return this.request(`/admin/organizations/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(orgData),
+    });
+  }
+
   // API Keys management
   async getApiKeys() {
     return this.request('/admin/api-keys');
