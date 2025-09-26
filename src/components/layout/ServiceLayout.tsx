@@ -1,56 +1,70 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useAppSelector } from "@/hooks/useAppSelector";
-import { authAPI } from "@/services/api";
-import { Bot, Building2, CreditCard, LayoutDashboard, MessageCircle, Server, ServerCogIcon, SquareArrowOutUpRight, Users, Wrench } from "lucide-react";
+import { useServiceAuth } from "@/contexts/ServiceAuthContext";
+import { 
+  LayoutDashboard, 
+  Settings, 
+  BarChart3, 
+  Building2, 
+  Key, 
+  Users, 
+  ArrowLeft,
+  LogOut,
+  FileText,
+  Bot,
+  Workflow,
+  Wrench
+} from "lucide-react";
 
-
-
-export default function AdminLayout() {
+export default function ServiceLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAppSelector((state) => state.auth);
+  const { user, logout } = useServiceAuth();
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const navigation = [
     {
-      name: "Dashboard",
-      href: "/admin",
-      icon: <LayoutDashboard />,
+      name: "Analytics",
+      href: "/service/analytics",
+      icon: <BarChart3 />,
+    },
+    {
+      name: "Environment Variables",
+      href: "/service/env-variables",
+      icon: <Settings />,
     },
     {
       name: "Organizations",
-      href: "/admin/organizations",
+      href: "/service/organizations",
       icon: <Building2 />,
     },
     {
-      name: "Users",
-      href: "/admin/users",
-      icon: <Users />,
+      name: "API Keys",
+      href: "/service/api-keys",
+      icon: <Key />,
     },
-    {
-      name: "Token Usage",
-      href: "/admin/token-usage",
-      icon: <CreditCard />,
-    },
-    {
-      name: "Connectors",
-      href: "/admin/connectors",
-      icon: <Server />,
-    },
-    { name: 'Tools', href: '/admin/tools', 
-      icon: <Wrench />,
-    },
-    // { name: 'System Logs', href: '/admin/logs', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' }
     {
       name: "Prompts",
-      href: "/admin/prompts",
-      icon: <MessageCircle />,
+      href: "/service/prompts",
+      icon: <FileText />,
     },
-    { name: 'Agents', href: '/admin/agents', icon: <Bot /> },
-
+    {
+      name: "Tools",
+      href: "/service/tools",
+      icon: <Wrench />,
+    },
+    {
+      name: "Agents & Workflows",
+      href: "/service/agents",
+      icon: <Bot />,
+    },
+    // {
+    //   name: "Users",
+    //   href: "/service/users",
+    //   icon: <Users />,
+    // },
   ];
 
   // Close user menu when clicking outside
@@ -70,17 +84,10 @@ export default function AdminLayout() {
     };
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await authAPI.logout();
-      navigate("/login");
-    } catch (error) {
-      console.error("Logout failed:", error);
-      // Still navigate to login even if logout API fails
-      navigate("/login");
-    } finally {
-      setUserMenuOpen(false);
-    }
+  const handleLogout = () => {
+    logout();
+    navigate("/service/login");
+    setUserMenuOpen(false);
   };
 
   return (
@@ -96,11 +103,15 @@ export default function AdminLayout() {
       <div className="flex h-screen overflow-hidden">
         {/* Sidebar */}
         <div
-          className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
-            } transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 lg:z-auto`}
+          className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 lg:z-auto`}
         >
           <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
-            <img src="/libraai.png" height={40} width={40} />
+            <div className="flex items-center space-x-2">
+              <img src="/libraai.png" height={32} width={32} />
+              <span className="text-sm font-medium text-gray-600">Service API</span>
+            </div>
 
             <button
               onClick={() => setSidebarOpen(false)}
@@ -130,36 +141,37 @@ export default function AdminLayout() {
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${isActive
+                    className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
+                      isActive
                         ? "bg-blue-100 text-blue-700 border-r-2 border-blue-700"
                         : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                      }`}
+                    }`}
                     onClick={() => setSidebarOpen(false)}
                   >
-                    <svg
-                      className={`mr-3 h-5 w-5 flex-shrink-0 ${isActive
+                    <div
+                      className={`mr-3 h-5 w-5 flex-shrink-0 ${
+                        isActive
                           ? "text-blue-500"
                           : "text-gray-400 group-hover:text-gray-500"
-                        }`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                      }`}
                     >
                       {item.icon}
-                    </svg>
+                    </div>
                     {item.name}
                   </Link>
                 );
               })}
             </div>
           </nav>
-          <div className="px-3 py-4">
+
+          {/* Back to Admin Panel */}
+          <div className="px-3 pb-4">
             <Link
-              to="/service/analytics"
+              to="/admin"
               className="group flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-md transition-colors duration-200"
             >
-                Service API
-                <SquareArrowOutUpRight className="h-4 w-4 ml-2" />
+              <ArrowLeft className="mr-3 h-5 w-5 flex-shrink-0 text-gray-400 group-hover:text-gray-500" />
+              Admin Panel
             </Link>
           </div>
         </div>
@@ -187,32 +199,26 @@ export default function AdminLayout() {
                   />
                 </svg>
               </button>
+              <h1 className="text-lg font-semibold text-gray-900 ml-2">
+                Service API Management
+              </h1>
             </div>
 
             <div className="flex items-center space-x-4">
-            
-
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                   className="flex items-center space-x-2 p-1 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
                 >
-                  {user?.avatar ? (
-                    <img
-                      src={user.avatar}
-                      alt={user.name}
-                      className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
-                      <span className="text-white text-sm font-medium">
-                        {user?.name?.charAt(0) || "A"}
-                      </span>
-                    </div>
-                  )}
+                  <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
+                    <span className="text-white text-sm font-medium">
+                      {user?.email?.charAt(0)?.toUpperCase() || "S"}
+                    </span>
+                  </div>
                   <svg
-                    className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${userMenuOpen ? "rotate-180" : ""
-                      }`}
+                    className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
+                      userMenuOpen ? "rotate-180" : ""
+                    }`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -229,31 +235,19 @@ export default function AdminLayout() {
                 {/* User dropdown menu */}
                 {userMenuOpen && (
                   <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50">
-                    <div className="px-4 py-3 border-b border-gray-100">
-                      <div className="text-sm font-medium text-gray-900">
-                        {user?.name || "Admin"}
-                      </div>
+                    <div className="px-4 text-left py-3 border-b border-gray-100">
+                      {/* <div className="text-sm font-medium text-gray-900">
+                        Service Admin
+                      </div> */}
                       <div className="text-sm text-gray-500">
-                        {user?.role || "User"}
+                        {user?.email || "service@example.com"}
                       </div>
                     </div>
                     <button
                       onClick={handleLogout}
                       className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition-colors duration-200 flex items-center space-x-2"
                     >
-                      <svg
-                        className="w-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                        />
-                      </svg>
+                      <LogOut className="w-4 h-4" />
                       <span>Sign out</span>
                     </button>
                   </div>
@@ -267,7 +261,6 @@ export default function AdminLayout() {
             <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-full">
                 <div className="p-6">
-                  {/* {children} */}
                   <Outlet />
                 </div>
               </div>
@@ -277,4 +270,4 @@ export default function AdminLayout() {
       </div>
     </div>
   );
-}
+} 

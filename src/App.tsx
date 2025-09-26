@@ -13,10 +13,26 @@ import PromptsPage from '@/pages/PromptsPage'
 import PromptEditor from '@/pages/PromptEditor'
 import ToolEditor from '@/pages/ToolEditor'
 import LogsPage from '@/pages/LogsPage'
+import ServiceLoginPage from '@/pages/ServiceLoginPage'
+import ServiceDashboard from '@/pages/ServiceDashboard'
+import ServiceLayout from '@/components/layout/ServiceLayout'
+import ServiceEnvVariablesPage from '@/pages/ServiceEnvVariablesPage'
+import ServiceAnalyticsPage from '@/pages/ServiceAnalyticsPage'
+import ServiceOrganizationsPage from '@/pages/ServiceOrganizationsPage'
+import ServiceApiKeysPage from '@/pages/ServiceApiKeysPage'
+import ServiceUsersPage from '@/pages/ServiceUsersPage'
+import ServicePromptsPage from '@/pages/ServicePromptsPage'
+import ServiceAgentsPage from '@/pages/ServiceAgentsPage'
+import ServiceWorkflowBuilder from '@/pages/ServiceWorkflowBuilder'
+import ServicePromptEditor from '@/pages/ServicePromptEditor'
+import ServiceToolsPage from '@/pages/ServiceToolsPage'
+import ServiceToolEditor from '@/pages/ServiceToolEditor'
 import { ROUTES } from '@/lib/constants'
 import './App.css'
 import { Toaster } from 'sonner'
 import { AuthProvider, ProtectedRoute } from './components/auth/AuthContext'
+import { ServiceAuthProvider } from '@/contexts/ServiceAuthContext'
+import { ServiceProtectedRoute } from '@/components/auth/ServiceProtectedRoute'
 import AgentsPage from './pages/AgentsPage'
 import WorkflowBuilder from './pages/WorkflowBuilder'
 import OrganizationConfigPage from '@/pages/OrganizationConfigPage'
@@ -36,9 +52,10 @@ const AppContent = () => {
   return (
     <Router>
       <AuthProvider>
-        <Toaster richColors position="top-right" style={{ zIndex: 9999 }} />
+        <ServiceAuthProvider>
+          <Toaster richColors position="top-right" style={{ zIndex: 9999 }} />
 
-        <Routes>
+          <Routes>
           <Route
             path={ROUTES.LOGIN}
             element={<LoginPage />}
@@ -105,9 +122,35 @@ const AppContent = () => {
               // </ProtectedRoute>
           }
           /> */}
+
+          <Route path={ROUTES.SERVICE_LOGIN} element={<ServiceLoginPage />} />
+          <Route 
+            path="/service"
+            element={
+              <ServiceProtectedRoute>
+                <ServiceLayout />
+              </ServiceProtectedRoute>
+            }
+          >
+            {/* <Route path="dashboard" element={<ServiceDashboard />} /> */}
+            <Route path="env-variables" element={<ServiceEnvVariablesPage />} />
+            <Route path="analytics" element={<ServiceAnalyticsPage />} />
+            <Route path="organizations" element={<ServiceOrganizationsPage />} />
+            <Route path="api-keys" element={<ServiceApiKeysPage />} />
+            <Route path="users" element={<ServiceUsersPage />} />
+            <Route path="prompts" element={<ServicePromptsPage />} />
+            <Route path="prompts/editor/:identifier" element={<ServicePromptEditor />} />
+            <Route path="tools" element={<ServiceToolsPage />} />
+            <Route path="tools/editor/:toolKey" element={<ServiceToolEditor />} />
+            <Route path="agents" element={<ServiceAgentsPage />} />
+            <Route path="workflows/new" element={<ServiceWorkflowBuilder />} />
+            <Route path="workflows/:id" element={<ServiceWorkflowBuilder />} />
+          </Route>
+          
           <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
 
-        </Routes>
+          </Routes>
+        </ServiceAuthProvider>
       </AuthProvider>
     </Router>
   )
