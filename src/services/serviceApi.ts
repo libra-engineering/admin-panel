@@ -230,7 +230,7 @@ class ServiceApiClient {
     formData.append('file', file);
     
     const authHeader = this.getAuthHeader();
-    const response = await fetch(`${this.baseURL}/admin/agents/bulk-import`, {
+    const response = await fetch(`${this.baseURL}/admin/library/bulk-import`, {
       method: 'POST',
       headers: {
         ...(authHeader && { Authorization: authHeader }),
@@ -280,7 +280,7 @@ class ServiceApiClient {
     formData.append('file', file);
     
     const authHeader = this.getAuthHeader();
-    const response = await fetch(`${this.baseURL}/admin/workflows/bulk-import`, {
+    const response = await fetch(`${this.baseURL}/admin/library/bulk-import`, {
       method: 'POST',
       headers: {
         ...(authHeader && { Authorization: authHeader }),
