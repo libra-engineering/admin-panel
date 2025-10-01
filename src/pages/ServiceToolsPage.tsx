@@ -32,7 +32,7 @@ export default function ServiceToolsPage() {
     try {
       setLoading(true)
       setError(null)
-      const response = await serviceApi.getToolPrompts() as { success: boolean; data: Array<{
+      const response = await serviceApi.getToolPrompts() as Array<{
         id: number;
         toolName: string;
         connectorType: string;
@@ -40,11 +40,11 @@ export default function ServiceToolsPage() {
         version: number;
         createdAt: string;
         updatedAt: string;
-      }> }
+      }>
       // Transform the array response into the expected object format
       const transformedToolPrompts: OrganizationToolPrompts = {}
-      if (response.data) {
-        response.data.forEach(item => {
+      if (response) {
+        response.forEach(item => {
           const key = `${item.toolName}:${item.connectorType}`
           transformedToolPrompts[key] = {
             promptTemplate: item.template,
