@@ -23,6 +23,7 @@ import {
   Server
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { getToolIcon } from '@/lib/icons';
 
 interface ApiKey {
   id: number;
@@ -814,28 +815,55 @@ export default function ServiceOrganizationDetailsPage() {
                           item.connectorType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           item.description?.toLowerCase().includes(searchTerm.toLowerCase())
                         )
-                        .map((item, index) => (
-                          <div key={index} className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50">
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1">
-                                <div className="text-sm font-medium text-gray-900">
-                                  {item.toolName} / {item.connectorType}
+                        .map((item, index) => {
+                          // Format tool name by removing underscores and capitalizing (same as tools page)
+                          const formatToolName = (name: string) => {
+                            const withSpaces = name
+                              .replace(/[_-]+/g, ' ')
+                              .replace(/([a-z0-9])([A-Z])/g, '$1 $2');
+                            return withSpaces
+                              .split(' ')
+                              .filter(Boolean)
+                              .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+                              .join(' ');
+                          };
+
+                          // Format connector type display name (same as tools page)
+                          const getConnectorDisplayName = (connectorType: string) => {
+                            return connectorType.charAt(0).toUpperCase() + connectorType.slice(1);
+                          };
+
+                          return (
+                            <div key={index} className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center flex-1">
+                                  <div className="flex items-center justify-center mr-3">
+                                    {getToolIcon(item.connectorType)}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="text-sm font-medium text-gray-900">
+                                      {formatToolName(item.toolName)}
+                                    </div>
+                                    <div className="text-xs text-gray-500 mt-1">
+                                      {getConnectorDisplayName(item.connectorType)} Operation
+                                    </div>
+                                    {item.description && (
+                                      <div className="text-xs text-gray-400 mt-1">{item.description}</div>
+                                    )}
+                                  </div>
                                 </div>
-                                {item.description && (
-                                  <div className="text-xs text-gray-500 mt-1">{item.description}</div>
-                                )}
+                                <Button
+                                  onClick={() => refreshIndividualItem('tool-prompts', item.id, item.toolName, item.connectorType)}
+                                  size="sm"
+                                  variant="outline"
+                                  className="ml-2"
+                                >
+                                  <RefreshCw className="h-3 w-3" />
+                                </Button>
                               </div>
-                              <Button
-                                onClick={() => refreshIndividualItem('tool-prompts', item.id, item.toolName, item.connectorType)}
-                                size="sm"
-                                variant="outline"
-                                className="ml-2"
-                              >
-                                <RefreshCw className="h-3 w-3" />
-                              </Button>
                             </div>
-                          </div>
-                        )) : <div className="text-gray-500 text-sm">No tool prompts available</div>}
+                          );
+                        }) : <div className="text-gray-500 text-sm">No tool prompts available</div>}
                     </div>
                   </div>
                 )}
