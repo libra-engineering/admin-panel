@@ -18,7 +18,9 @@ import {
   Save,
   X,
   CheckCircle,
-  Copy
+  Copy,
+  RefreshCw,
+  Server
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -94,11 +96,46 @@ export default function ServiceOrganizationDetailsPage() {
     selfHostedApiUrl: ''
   });
 
+  // Refresh states
+  const [refreshing, setRefreshing] = useState<{
+    toolPrompts: boolean;
+    prompts: boolean;
+    agents: boolean;
+    workflows: boolean;
+  }>({
+    toolPrompts: false,
+    prompts: false,
+    agents: false,
+    workflows: false
+  });
+
+  // Available items for refresh
+  const [availableItems, setAvailableItems] = useState<{
+    toolPrompts: any[];
+    prompts: any[];
+    agents: any[];
+    workflows: any[];
+  }>({
+    toolPrompts: [],
+    prompts: [],
+    agents: [],
+    workflows: []
+  });
+
+  const [loadingItems, setLoadingItems] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+
   useEffect(() => {
     if (id) {
       fetchOrganizationDetails(id);
     }
   }, [id]);
+
+  useEffect(() => {
+    if (organization?.selfHosted && organization?.selfHostedApiUrl) {
+      fetchAvailableItems();
+    }
+  }, [organization?.selfHosted, organization?.selfHostedApiUrl]);
 
   const handleCopyApiKey = (key: string) => {
     navigator.clipboard.writeText(key);
@@ -175,6 +212,261 @@ export default function ServiceOrganizationDetailsPage() {
 
   const getActiveApiKeysCount = (apiKeys?: ApiKey[]) => {
     return apiKeys?.filter(key => !key.deleted && !key.disabled).length || 0;
+  };
+
+  // Refresh functions for self-hosted instances
+  const refreshSelfHosted = async (endpoint: string, refreshType: keyof typeof refreshing) => {
+    if (!organization?.selfHosted || !organization?.selfHostedApiUrl) {
+      toast.error('Organization is not self-hosted or API URL is not configured');
+      return;
+    }
+
+    try {
+      setRefreshing(prev => ({ ...prev, [refreshType]: true }));
+      
+      const baseUrl = organization.selfHostedApiUrl.replace(/\/$/, ''); // Remove trailing slash
+      const url = `${baseUrl}/api/libra/refresh/${endpoint}`;
+      
+      // Get the JWT token from localStorage (assuming it's stored there)
+      const token = localStorage.getItem('service_jwt_token')
+      if (!token) {
+        toast.error('Admin authentication token not found');
+        return;
+      }
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        toast.success(data.message || `${refreshType} refreshed successfully`);
+      } else {
+        throw new Error(data.message || `Failed to refresh ${refreshType}`);
+      }
+    } catch (error) {
+      console.error(`Failed to refresh ${refreshType}:`, error);
+      toast.error(error instanceof Error ? error.message : `Failed to refresh ${refreshType}`);
+    } finally {
+      setRefreshing(prev => ({ ...prev, [refreshType]: false }));
+    }
+  };
+
+  // Refresh specific tool prompts (you can expand this to include more tools)
+  const refreshToolPrompts = async () => {
+    if (!organization?.selfHosted || !organization?.selfHostedApiUrl) {
+      toast.error('Organization is not self-hosted or API URL is not configured');
+      return;
+    }
+
+    try {
+      setRefreshing(prev => ({ ...prev, toolPrompts: true }));
+      
+      const baseUrl = organization.selfHostedApiUrl.replace(/\/$/, '');
+      const token = localStorage.getItem('service_jwt_token')
+      if (!token) {
+        toast.error('Admin authentication token not found');
+        return;
+      }
+
+      // Refresh common tool prompts
+      const toolPrompts = [
+        'tool-prompts/jira/read',
+        'tool-prompts/jira/write', 
+        'tool-prompts/slack/read',
+        'tool-prompts/slack/write',
+        'tool-prompts/notion/read',
+        'tool-prompts/notion/write'
+      ];
+
+      const promises = toolPrompts.map(async (endpoint) => {
+        const url = `${baseUrl}/api/libra/refresh/${endpoint}`;
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        return response.json();
+      });
+
+      await Promise.all(promises);
+      toast.success('Tool prompts refreshed successfully');
+    } catch (error) {
+      console.error('Failed to refresh tool prompts:', error);
+      toast.error('Failed to refresh tool prompts');
+    } finally {
+      setRefreshing(prev => ({ ...prev, toolPrompts: false }));
+    }
+  };
+
+  const refreshPrompts = () => refreshSelfHosted('prompt/system', 'prompts');
+  const refreshAgents = () => refreshSelfHosted('agents/productivity', 'agents');
+  const refreshWorkflows = () => refreshSelfHosted('workflows', 'workflows');
+
+  // Fetch all available items for refresh
+  const fetchAvailableItems = async () => {
+    if (!organization?.selfHosted || !organization?.selfHostedApiUrl) {
+      return;
+    }
+
+    try {
+      setLoadingItems(true);
+      
+      const baseUrl = organization.selfHostedApiUrl.replace(/\/$/, '');
+      const token = localStorage.getItem('service_jwt_token');
+      if (!token) {
+        toast.error('Admin authentication token not found');
+        return;
+      }
+
+      // Fetch all available items in parallel
+      const [toolPromptsRes, promptsRes, agentsRes, workflowsRes] = await Promise.allSettled([
+        serviceApi.getToolPrompts(),
+        serviceApi.getPrompts(),
+        serviceApi.getAgents(),
+        serviceApi.getWorkflows()
+      ]);
+
+      // Debug logging to understand API response structure
+      console.log('API Responses:', {
+        toolPrompts: toolPromptsRes,
+        prompts: promptsRes,
+        agents: agentsRes,
+        workflows: workflowsRes
+      });
+
+      setAvailableItems({
+        toolPrompts: toolPromptsRes.status === 'fulfilled' ? (Array.isArray(toolPromptsRes.value) ? toolPromptsRes.value : []) : [],
+        prompts: promptsRes.status === 'fulfilled' ? (Array.isArray(promptsRes.value) ? promptsRes.value : []) : [],
+        agents: agentsRes.status === 'fulfilled' ? (Array.isArray(agentsRes.value) ? agentsRes.value : []) : [],
+        workflows: workflowsRes.status === 'fulfilled' ? (Array.isArray(workflowsRes.value) ? workflowsRes.value : []) : []
+      });
+
+    } catch (error) {
+      console.error('Failed to fetch available items:', error);
+      toast.error('Failed to fetch available items');
+    } finally {
+      setLoadingItems(false);
+    }
+  };
+
+  // Refresh individual item
+  const refreshIndividualItem = async (type: 'tool-prompts' | 'prompt' | 'agent' | 'workflow', identifier: string, toolName?: string, connectorType?: string) => {
+    if (!organization?.selfHosted || !organization?.selfHostedApiUrl) {
+      toast.error('Organization is not self-hosted or API URL is not configured');
+      return;
+    }
+
+    try {
+      const baseUrl = organization.selfHostedApiUrl.replace(/\/$/, '');
+      const token = localStorage.getItem('service_jwt_token');
+      if (!token) {
+        toast.error('Admin authentication token not found');
+        return;
+      }
+
+      let endpoint = '';
+      if (type === 'tool-prompts' && toolName && connectorType) {
+        endpoint = `tool-prompts/${toolName}/${connectorType}`;
+      } else if (type === 'prompt') {
+        endpoint = `prompt/${identifier}`;
+      } else if (type === 'agent') {
+        endpoint = `agent/${identifier}`;
+      } else if (type === 'workflow') {
+        endpoint = `workflow/${identifier}`;
+      }
+
+      const url = `${baseUrl}/api/libra/refresh/${endpoint}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        toast.success(data.message || `${type} refreshed successfully`);
+      } else {
+        throw new Error(data.message || `Failed to refresh ${type}`);
+      }
+    } catch (error) {
+      console.error(`Failed to refresh ${type}:`, error);
+      toast.error(error instanceof Error ? error.message : `Failed to refresh ${type}`);
+    }
+  };
+
+  // Bulk refresh by category
+  const bulkRefreshCategory = async (category: keyof typeof availableItems) => {
+    if (!organization?.selfHosted || !organization?.selfHostedApiUrl) {
+      toast.error('Organization is not self-hosted or API URL is not configured');
+      return;
+    }
+
+    try {
+      setRefreshing(prev => ({ ...prev, [category]: true }));
+      
+      const baseUrl = organization.selfHostedApiUrl.replace(/\/$/, '');
+      const token = localStorage.getItem('service_jwt_token');
+      if (!token) {
+        toast.error('Admin authentication token not found');
+        return;
+      }
+
+      let endpoint = '';
+      if (category === 'toolPrompts') {
+        endpoint = 'tool-prompts';
+      } else if (category === 'prompts') {
+        endpoint = 'prompt/system';
+      } else if (category === 'agents') {
+        endpoint = 'agents/productivity';
+      } else if (category === 'workflows') {
+        endpoint = 'workflows';
+      }
+
+      const url = `${baseUrl}/api/libra/refresh/${endpoint}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        toast.success(data.message || `${category} refreshed successfully`);
+      } else {
+        throw new Error(data.message || `Failed to refresh ${category}`);
+      }
+    } catch (error) {
+      console.error(`Failed to refresh ${category}:`, error);
+      toast.error(error instanceof Error ? error.message : `Failed to refresh ${category}`);
+    } finally {
+      setRefreshing(prev => ({ ...prev, [category]: false }));
+    }
   };
 
   if (isLoading) {
@@ -465,6 +757,271 @@ export default function ServiceOrganizationDetailsPage() {
           </div>
         </Card>
       </div>
+
+      {/* Self-hosted Refresh Section */}
+      {organization.selfHosted && organization.selfHostedApiUrl && (
+        <Card>
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <Server className="h-5 w-5 mr-2" />
+                  Self-hosted Cache Refresh
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Manually refresh cached data on the self-hosted instance at <code className="bg-gray-100 px-2 py-1 rounded text-xs">{organization.selfHostedApiUrl}</code>
+                </p>
+              </div>
+              <Button
+                onClick={fetchAvailableItems}
+                disabled={loadingItems}
+                variant="outline"
+                size="sm"
+                className="flex items-center"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${loadingItems ? 'animate-spin' : ''}`} />
+                Refresh List
+              </Button>
+            </div>
+
+            {/* Search */}
+            <div className="mb-6">
+              <Input
+                type="text"
+                placeholder="Search items..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="max-w-md"
+              />
+            </div>
+
+            {/* Quick Bulk Refresh Buttons */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <Button
+                onClick={() => bulkRefreshCategory('toolPrompts')}
+                disabled={refreshing.toolPrompts}
+                variant="outline"
+                className="flex items-center justify-center h-20 flex-col space-y-2"
+              >
+                <RefreshCw className={`h-5 w-5 ${refreshing.toolPrompts ? 'animate-spin' : ''}`} />
+                <span className="text-sm font-medium">All Tool Prompts</span>
+                <span className="text-xs text-gray-500">({Array.isArray(availableItems.toolPrompts) ? availableItems.toolPrompts.length : 0} items)</span>
+              </Button>
+
+              <Button
+                onClick={() => bulkRefreshCategory('prompts')}
+                disabled={refreshing.prompts}
+                variant="outline"
+                className="flex items-center justify-center h-20 flex-col space-y-2"
+              >
+                <RefreshCw className={`h-5 w-5 ${refreshing.prompts ? 'animate-spin' : ''}`} />
+                <span className="text-sm font-medium">All Prompts</span>
+                <span className="text-xs text-gray-500">({Array.isArray(availableItems.prompts) ? availableItems.prompts.length : 0} items)</span>
+              </Button>
+
+              <Button
+                onClick={() => bulkRefreshCategory('agents')}
+                disabled={refreshing.agents}
+                variant="outline"
+                className="flex items-center justify-center h-20 flex-col space-y-2"
+              >
+                <RefreshCw className={`h-5 w-5 ${refreshing.agents ? 'animate-spin' : ''}`} />
+                <span className="text-sm font-medium">All Agents</span>
+                <span className="text-xs text-gray-500">({Array.isArray(availableItems.agents) ? availableItems.agents.length : 0} items)</span>
+              </Button>
+
+              <Button
+                onClick={() => bulkRefreshCategory('workflows')}
+                disabled={refreshing.workflows}
+                variant="outline"
+                className="flex items-center justify-center h-20 flex-col space-y-2"
+              >
+                <RefreshCw className={`h-5 w-5 ${refreshing.workflows ? 'animate-spin' : ''}`} />
+                <span className="text-sm font-medium">All Workflows</span>
+                <span className="text-xs text-gray-500">({Array.isArray(availableItems.workflows) ? availableItems.workflows.length : 0} items)</span>
+              </Button>
+            </div>
+
+            {/* Detailed Items List */}
+            {loadingItems ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Tool Prompts */}
+                <div>
+                  <h4 className="text-md font-semibold text-gray-900 mb-3 flex items-center">
+                    <Zap className="h-4 w-4 mr-2" />
+                    Tool Prompts ({Array.isArray(availableItems.toolPrompts) ? availableItems.toolPrompts.length : 0})
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {Array.isArray(availableItems.toolPrompts) ? availableItems.toolPrompts
+                      .filter(item => 
+                        !searchTerm || 
+                        item.toolName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        item.connectorType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        item.description?.toLowerCase().includes(searchTerm.toLowerCase())
+                      )
+                      .map((item, index) => (
+                        <div key={index} className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="text-sm font-medium text-gray-900">
+                                {item.toolName} / {item.connectorType}
+                              </div>
+                              {item.description && (
+                                <div className="text-xs text-gray-500 mt-1">{item.description}</div>
+                              )}
+                            </div>
+                            <Button
+                              onClick={() => refreshIndividualItem('tool-prompts', item.id, item.toolName, item.connectorType)}
+                              size="sm"
+                              variant="outline"
+                              className="ml-2"
+                            >
+                              <RefreshCw className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      )) : <div className="text-gray-500 text-sm">No tool prompts available</div>}
+                  </div>
+                </div>
+
+                {/* Prompts */}
+                <div>
+                  <h4 className="text-md font-semibold text-gray-900 mb-3 flex items-center">
+                    <Key className="h-4 w-4 mr-2" />
+                    System Prompts ({Array.isArray(availableItems.prompts) ? availableItems.prompts.length : 0})
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {Array.isArray(availableItems.prompts) ? availableItems.prompts
+                      .filter(item => 
+                        !searchTerm || 
+                        item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        item.identifier?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        item.description?.toLowerCase().includes(searchTerm.toLowerCase())
+                      )
+                      .map((item, index) => (
+                        <div key={index} className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="text-sm font-medium text-gray-900">{item.name || item.identifier}</div>
+                              {item.description && (
+                                <div className="text-xs text-gray-500 mt-1">{item.description}</div>
+                              )}
+                              <div className="text-xs text-gray-400 mt-1">ID: {item.identifier}</div>
+                            </div>
+                            <Button
+                              onClick={() => refreshIndividualItem('prompt', item.identifier)}
+                              size="sm"
+                              variant="outline"
+                              className="ml-2"
+                            >
+                              <RefreshCw className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      )) : <div className="text-gray-500 text-sm">No prompts available</div>}
+                  </div>
+                </div>
+
+                {/* Agents */}
+                <div>
+                  <h4 className="text-md font-semibold text-gray-900 mb-3 flex items-center">
+                    <Users className="h-4 w-4 mr-2" />
+                    Agent Library ({Array.isArray(availableItems.agents) ? availableItems.agents.length : 0})
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {Array.isArray(availableItems.agents) ? availableItems.agents
+                      .filter(item => 
+                        !searchTerm || 
+                        item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        item.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        item.description?.toLowerCase().includes(searchTerm.toLowerCase())
+                      )
+                      .map((item, index) => (
+                        <div key={index} className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="text-sm font-medium text-gray-900">{item.name}</div>
+                              {item.description && (
+                                <div className="text-xs text-gray-500 mt-1">{item.description}</div>
+                              )}
+                              {item.category && (
+                                <div className="text-xs text-blue-600 mt-1">Category: {item.category}</div>
+                              )}
+                            </div>
+                            <Button
+                              onClick={() => refreshIndividualItem('agent', item.id)}
+                              size="sm"
+                              variant="outline"
+                              className="ml-2"
+                            >
+                              <RefreshCw className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      )) : <div className="text-gray-500 text-sm">No agents available</div>}
+                  </div>
+                </div>
+
+                {/* Workflows */}
+                <div>
+                  <h4 className="text-md font-semibold text-gray-900 mb-3 flex items-center">
+                    <Activity className="h-4 w-4 mr-2" />
+                    Workflow Library ({Array.isArray(availableItems.workflows) ? availableItems.workflows.length : 0})
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {Array.isArray(availableItems.workflows) ? availableItems.workflows
+                      .filter(item => 
+                        !searchTerm || 
+                        item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        item.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        item.workflowType?.toLowerCase().includes(searchTerm.toLowerCase())
+                      )
+                      .map((item, index) => (
+                        <div key={index} className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="text-sm font-medium text-gray-900">{item.name}</div>
+                              {item.category && (
+                                <div className="text-xs text-blue-600 mt-1">Category: {item.category}</div>
+                              )}
+                              {item.workflowType && (
+                                <div className="text-xs text-gray-500 mt-1">Type: {item.workflowType}</div>
+                              )}
+                            </div>
+                            <Button
+                              onClick={() => refreshIndividualItem('workflow', item.id)}
+                              size="sm"
+                              variant="outline"
+                              className="ml-2"
+                            >
+                              <RefreshCw className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      )) : <div className="text-gray-500 text-sm">No workflows available</div>}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-md">
+              <div className="flex">
+                <AlertCircle className="h-4 w-4 text-blue-400 mt-0.5" />
+                <div className="ml-2">
+                  <p className="text-xs text-blue-700">
+                    <strong>Note:</strong> These operations will clear the cache and fetch fresh data from the Services API on the self-hosted instance. 
+                    Individual refresh buttons allow you to refresh specific items, while bulk refresh buttons refresh entire categories.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Usage Metrics */}
       {organization.usageMetrics && organization.usageMetrics.length > 0 && (
