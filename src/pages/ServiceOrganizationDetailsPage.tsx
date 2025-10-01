@@ -64,6 +64,7 @@ interface EditOrgForm {
   seats: number;
   selfHosted: boolean;
   selfHostedApiUrl: string;
+  active: boolean;
 }
 
 interface UsageUser {
@@ -120,7 +121,8 @@ export default function ServiceOrganizationDetailsPage() {
     domain: '',
     seats: 1,
     selfHosted: false,
-    selfHostedApiUrl: ''
+    selfHostedApiUrl: '',
+    active: true
   });
 
   // Refresh states
@@ -186,8 +188,9 @@ export default function ServiceOrganizationDetailsPage() {
         name: orgDetails.name,
         domain: orgDetails.domain || '',
         seats: orgDetails.seats,
-        selfHosted: orgDetails.selfHosted || false,
-        selfHostedApiUrl: orgDetails.selfHostedApiUrl || ''
+        selfHosted: orgDetails.selfHosted,
+        selfHostedApiUrl: orgDetails.selfHostedApiUrl || '',
+        active: orgDetails.active
       });
     } catch (error) {
       console.error('Failed to fetch organization details:', error);
@@ -286,106 +289,6 @@ export default function ServiceOrganizationDetailsPage() {
   const getActiveApiKeysCount = (apiKeys?: ApiKey[]) => {
     return apiKeys?.filter(key => !key.deleted && !key.disabled).length || 0;
   };
-
-  // Refresh functions for self-hosted instances
-  const refreshSelfHosted = async (endpoint: string, refreshType: keyof typeof refreshing) => {
-    if (!organization?.selfHosted || !organization?.selfHostedApiUrl) {
-      toast.error('Organization is not self-hosted or API URL is not configured');
-      return;
-    }
-
-    try {
-      setRefreshing(prev => ({ ...prev, [refreshType]: true }));
-      
-      const baseUrl = organization.selfHostedApiUrl.replace(/\/$/, ''); // Remove trailing slash
-      const url = `${baseUrl}/api/libra/refresh/${endpoint}`;
-      
-      // Get the JWT token from localStorage (assuming it's stored there)
-      const token = localStorage.getItem('service_jwt_token')
-      if (!token) {
-        toast.error('Admin authentication token not found');
-        return;
-      }
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.success) {
-        toast.success(data.message || `${refreshType} refreshed successfully`);
-      } else {
-        throw new Error(data.message || `Failed to refresh ${refreshType}`);
-      }
-    } catch (error) {
-      console.error(`Failed to refresh ${refreshType}:`, error);
-      toast.error(error instanceof Error ? error.message : `Failed to refresh ${refreshType}`);
-    } finally {
-      setRefreshing(prev => ({ ...prev, [refreshType]: false }));
-    }
-  };
-
-  // Refresh specific tool prompts (you can expand this to include more tools)
-  const refreshToolPrompts = async () => {
-    if (!organization?.selfHosted || !organization?.selfHostedApiUrl) {
-      toast.error('Organization is not self-hosted or API URL is not configured');
-      return;
-    }
-
-    try {
-      setRefreshing(prev => ({ ...prev, toolPrompts: true }));
-      
-      const baseUrl = organization.selfHostedApiUrl.replace(/\/$/, '');
-      const token = localStorage.getItem('service_jwt_token')
-      if (!token) {
-        toast.error('Admin authentication token not found');
-        return;
-      }
-
-      // Refresh common tool prompts
-      const toolPrompts = [
-        'tool-prompts/jira/read',
-        'tool-prompts/jira/write', 
-        'tool-prompts/slack/read',
-        'tool-prompts/slack/write',
-        'tool-prompts/notion/read',
-        'tool-prompts/notion/write'
-      ];
-
-      const promises = toolPrompts.map(async (endpoint) => {
-        const url = `${baseUrl}/api/libra/refresh/${endpoint}`;
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        return response.json();
-      });
-
-      await Promise.all(promises);
-      toast.success('Tool prompts refreshed successfully');
-    } catch (error) {
-      console.error('Failed to refresh tool prompts:', error);
-      toast.error('Failed to refresh tool prompts');
-    } finally {
-      setRefreshing(prev => ({ ...prev, toolPrompts: false }));
-    }
-  };
-
-  const refreshPrompts = () => refreshSelfHosted('prompt/system', 'prompts');
-  const refreshAgents = () => refreshSelfHosted('agents/productivity', 'agents');
-  const refreshWorkflows = () => refreshSelfHosted('workflows', 'workflows');
 
   // Fetch all available items for refresh
   const fetchAvailableItems = async () => {
@@ -557,8 +460,9 @@ export default function ServiceOrganizationDetailsPage() {
                     name: organization.name,
                     domain: organization.domain || '',
                     seats: organization.seats,
-                    selfHosted: organization.selfHosted || false,
-                    selfHostedApiUrl: organization.selfHostedApiUrl || ''
+                    selfHosted: organization.selfHosted,
+                    selfHostedApiUrl: organization.selfHostedApiUrl || '',
+                    active: organization.active
                   });
                 }}
               >
@@ -605,7 +509,7 @@ export default function ServiceOrganizationDetailsPage() {
               Cache Refresh
             </button>
           )}
-          <button
+          {organization.selfHosted && organization.selfHostedApiUrl && <button
             onClick={() => setMainTab('users')}
             className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center ${
               mainTab === 'users'
@@ -615,7 +519,7 @@ export default function ServiceOrganizationDetailsPage() {
           >
             <Users className="h-4 w-4 mr-2" />
             Users
-          </button>
+          </button>}
         </nav>
       </div>
 
@@ -652,7 +556,7 @@ export default function ServiceOrganizationDetailsPage() {
           </div>
         </Card>
 
-        <Card className="border-l-4 border-l-purple-500">
+        {organization.selfHosted && organization.selfHostedApiUrl && <Card className="border-l-4 border-l-purple-500">
           <div className="p-6">
             <div className="flex items-center">
               <div>
@@ -663,7 +567,7 @@ export default function ServiceOrganizationDetailsPage() {
               </div>
             </div>
           </div>
-        </Card>
+        </Card>}
 
         <Card className="border-l-4 border-l-blue-500">
           <div className="p-6">
@@ -691,7 +595,7 @@ export default function ServiceOrganizationDetailsPage() {
           </div>
         </Card>
 
-        <Card className="border-l-4 border-l-green-500">
+        {organization.selfHosted && organization.selfHostedApiUrl && <Card className="border-l-4 border-l-green-500">
           <div className="p-6">
             <div className="flex items-center">
               <div>
@@ -702,10 +606,10 @@ export default function ServiceOrganizationDetailsPage() {
               </div>
             </div>
           </div>
-        </Card>
+        </Card>}
 
 
-        <Card className="border-l-4 border-l-blue-500">
+        {organization.selfHosted && organization.selfHostedApiUrl && <Card className="border-l-4 border-l-blue-500">
           <div className="p-6">
             <div className="flex items-center">
               <div>
@@ -716,9 +620,9 @@ export default function ServiceOrganizationDetailsPage() {
               </div>
             </div>
           </div>
-        </Card>
+        </Card>}
 
-        <Card className="border-l-4 border-l-orange-500">
+        {organization.selfHosted && organization.selfHostedApiUrl && <Card className="border-l-4 border-l-orange-500">
           <div className="p-6">
             <div className="flex items-center">
               <div>
@@ -729,7 +633,7 @@ export default function ServiceOrganizationDetailsPage() {
               </div>
             </div>
           </div>
-        </Card>
+        </Card>}
       </div>
 
       {/* Organization Details */}
@@ -742,6 +646,18 @@ export default function ServiceOrganizationDetailsPage() {
             </h3>
             {isEditing ? (
               <div className="space-y-4">
+                <div className="flex items-center space-x-2 mt-2">
+                  <input
+                    id="active"
+                    type="checkbox"
+                    checked={!!editForm.active}
+                    onChange={(e) => handleEditFormChange('active', e.target.checked)}
+                    className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                  />
+                  <label htmlFor="active" className="block text-sm font-medium text-gray-700">
+                    Active
+                  </label>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
                   <Input
@@ -1193,7 +1109,7 @@ export default function ServiceOrganizationDetailsPage() {
       )}
 
       {/* Users Tab */}
-      {mainTab === 'users' && (
+      {mainTab === 'users' && organization.selfHosted && organization.selfHostedApiUrl && (
         <div className="space-y-6">
           {organization?.selfHosted && organization?.selfHostedApiUrl ? (
             usageData ? (
