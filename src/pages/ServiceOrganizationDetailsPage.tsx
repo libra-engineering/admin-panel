@@ -152,6 +152,7 @@ export default function ServiceOrganizationDetailsPage() {
   const [loadingItems, setLoadingItems] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'toolPrompts' | 'prompts' | 'agents' | 'workflows'>('toolPrompts');
+  const [mainTab, setMainTab] = useState<'dashboard' | 'cache' | 'users'>('dashboard');
 
   useEffect(() => {
     if (id) {
@@ -577,9 +578,51 @@ export default function ServiceOrganizationDetailsPage() {
         </div>
       </div>
 
-      
+      {/* Main Tab Navigation */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setMainTab('dashboard')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center ${
+              mainTab === 'dashboard'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Dashboard
+          </button>
+          {organization?.selfHosted && organization?.selfHostedApiUrl && (
+            <button
+              onClick={() => setMainTab('cache')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center ${
+                mainTab === 'cache'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Cache Refresh
+            </button>
+          )}
+          <button
+            onClick={() => setMainTab('users')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center ${
+              mainTab === 'users'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <Users className="h-4 w-4 mr-2" />
+            Users
+          </button>
+        </nav>
+      </div>
 
-      {/* Stats Overview */}
+      {/* Tab Content */}
+      {mainTab === 'dashboard' && (
+        <div className="space-y-6">
+          {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
 
       <Card className="border-l-4 border-l-blue-500">
@@ -835,8 +878,11 @@ export default function ServiceOrganizationDetailsPage() {
         </Card>
       </div>
 
-      {/* Self-hosted Refresh Section */}
-      {organization.selfHosted && organization.selfHostedApiUrl && (
+        </div>
+      )}
+
+      {/* Cache Refresh Tab */}
+      {mainTab === 'cache' && organization.selfHosted && organization.selfHostedApiUrl && (
         <Card>
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
@@ -1146,130 +1192,143 @@ export default function ServiceOrganizationDetailsPage() {
         </Card>
       )}
 
-      {/* Usage and Users Data */}
-      {organization?.selfHosted && organization?.selfHostedApiUrl ? (
-        usageData ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-            {/* Users List */}
+      {/* Users Tab */}
+      {mainTab === 'users' && (
+        <div className="space-y-6">
+          {organization?.selfHosted && organization?.selfHostedApiUrl ? (
+            usageData ? (
+              <Card>
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                      <Users className="h-5 w-5 mr-2" />
+                      Users ({usageData.users.length})
+                    </h3>
+                    <Button
+                      onClick={() => fetchUsageData(id!)}
+                      disabled={isLoadingUsage}
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center"
+                    >
+                      <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingUsage ? 'animate-spin' : ''}`} />
+                      Refresh
+                    </Button>
+                  </div>
+                  
+                  {/* Users Table */}
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activity</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tokens</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {usageData.users.map((user) => (
+                          <tr key={user.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <div className="flex-shrink-0 h-10 w-10">
+                                  <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                                    <span className="text-sm font-medium text-gray-700">
+                                      {user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="ml-4">
+                                  <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                                  <div className="text-sm text-gray-500">{user.email}</div>
+                                  <div className="text-xs text-gray-400">{user.title} • {user.function}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <Badge variant={user.role === 'superadmin' ? 'success' : 'default'}>
+                                {user.role}
+                              </Badge>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              <div>{user.noOfChats} chats</div>
+                              <div className="text-xs text-gray-500">{user.noOfUserMemories} memories</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              <div className="font-medium">{user.totalTokens.toLocaleString()}</div>
+                              <div className="text-xs text-gray-500">
+                                {user.totalInputTokens.toLocaleString()} in • {user.totalOutputTokens.toLocaleString()} out
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <Badge variant={user.onboardingComplete ? 'success' : 'error'}>
+                                {user.onboardingComplete ? 'Onboarded' : 'Pending'}
+                              </Badge>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {formatDate(user.createdAt)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </Card>
+            ) : (
+              <Card>
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                      <Users className="h-5 w-5 mr-2" />
+                      Users
+                    </h3>
+                    <Button
+                      onClick={() => fetchUsageData(id!)}
+                      disabled={isLoadingUsage}
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center"
+                    >
+                      <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingUsage ? 'animate-spin' : ''}`} />
+                      {isLoadingUsage ? 'Loading...' : 'Load Data'}
+                    </Button>
+                  </div>
+                  {isLoadingUsage ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                      <p>Click "Load Data" to fetch user information</p>
+                      <p className="text-sm text-gray-400 mt-1">Data will be fetched from: {organization.selfHostedApiUrl}/api/libra/usage</p>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            )
+          ) : (
             <Card>
               <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                    <Users className="h-5 w-5 mr-2" />
-                    Users ({usageData.users.length})
-                  </h3>
-                  <Button
-                    onClick={() => fetchUsageData(id!)}
-                    disabled={isLoadingUsage}
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center"
-                  >
-                    <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingUsage ? 'animate-spin' : ''}`} />
-                    Refresh
-                  </Button>
-                </div>
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {usageData.users.map((user) => (
-                  <div key={user.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2">
-                          <h4 className="text-sm font-medium text-gray-900">{user.name}</h4>
-                          <Badge variant={user.role === 'superadmin' ? 'success' : 'default'}>
-                            {user.role}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-gray-500">{user.email}</p>
-                        <p className="text-xs text-gray-400">{user.title} • {user.function}</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-xs text-gray-500">
-                          {user.noOfChats} chats
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {user.totalTokens.toLocaleString()} tokens
-                        </div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 mt-3 text-xs">
-                      <div>
-                        <span className="text-gray-500">Input:</span>
-                        <span className="ml-1 font-medium">{user.totalInputTokens.toLocaleString()}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Output:</span>
-                        <span className="ml-1 font-medium">{user.totalOutputTokens.toLocaleString()}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Memories:</span>
-                        <span className="ml-1 font-medium">{user.noOfUserMemories}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Onboarded:</span>
-                        <Badge variant={user.onboardingComplete ? 'success' : 'error'} className="ml-1">
-                          {user.onboardingComplete ? 'Yes' : 'No'}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="text-xs text-gray-400 mt-2">
-                      Joined: {formatDate(user.createdAt)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Card>
-        </div>
-        ) : (
-          <Card>
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                  <BarChart3 className="h-5 w-5 mr-2" />
-                  Usage & Users Data
+                <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                  <Users className="h-5 w-5 mr-2" />
+                  Users
                 </h3>
-                <Button
-                  onClick={() => fetchUsageData(id!)}
-                  disabled={isLoadingUsage}
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center"
-                >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingUsage ? 'animate-spin' : ''}`} />
-                  {isLoadingUsage ? 'Loading...' : 'Load Data'}
-                </Button>
-              </div>
-              {isLoadingUsage ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                </div>
-              ) : (
                 <div className="text-center py-8 text-gray-500">
-                  <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                  <p>Click "Load Data" to fetch usage and user information</p>
-                  <p className="text-sm text-gray-400 mt-1">Data will be fetched from: {organization.selfHostedApiUrl}/api/libra/usage</p>
+                  <Server className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>User data is only available for self-hosted organizations</p>
+                  <p className="text-sm text-gray-400 mt-1">This organization is not self-hosted or API URL is not configured</p>
                 </div>
-              )}
-            </div>
-          </Card>
-        )
-      ) : (
-        <Card>
-          <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-              <BarChart3 className="h-5 w-5 mr-2" />
-              Usage & Users Data
-            </h3>
-            <div className="text-center py-8 text-gray-500">
-              <Server className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p>Usage and user data is only available for self-hosted organizations</p>
-              <p className="text-sm text-gray-400 mt-1">This organization is not self-hosted or API URL is not configured</p>
-            </div>
-          </div>
-        </Card>
+              </div>
+            </Card>
+          )}
+        </div>
       )}
+
 
       {/* Legacy Usage Metrics */}
       {organization.usageMetrics && organization.usageMetrics.length > 0 && (
