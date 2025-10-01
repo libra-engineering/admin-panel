@@ -902,12 +902,30 @@ export default function ServiceOrganizationDetailsPage() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                       {Array.isArray(availableItems.toolPrompts) ? availableItems.toolPrompts
-                        .filter(item => 
-                          !searchTerm || 
-                          item.toolName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          item.connectorType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          item.description?.toLowerCase().includes(searchTerm.toLowerCase())
-                        )
+                        .filter(item => {
+                          if (!searchTerm) return true;
+                          
+                          const searchLower = searchTerm.toLowerCase();
+                          const toolNameLower = item.toolName?.toLowerCase() || '';
+                          const connectorTypeLower = item.connectorType?.toLowerCase() || '';
+                          const descriptionLower = item.description?.toLowerCase() || '';
+                          
+                          // Normalize search term: convert spaces to underscores and vice versa
+                          const searchWithUnderscores = searchLower.replace(/\s+/g, '_');
+                          const searchWithSpaces = searchLower.replace(/_/g, ' ');
+                          
+                          // Normalize tool name: convert underscores to spaces for display matching
+                          const toolNameWithSpaces = toolNameLower.replace(/_/g, ' ');
+                          
+                          return (
+                            toolNameLower.includes(searchLower) ||
+                            toolNameLower.includes(searchWithUnderscores) ||
+                            toolNameWithSpaces.includes(searchWithSpaces) ||
+                            toolNameWithSpaces.includes(searchLower) ||
+                            connectorTypeLower.includes(searchLower) ||
+                            descriptionLower.includes(searchLower)
+                          );
+                        })
                         .map((item, index) => {
                           // Format tool name by removing underscores and capitalizing (same as tools page)
                           const formatToolName = (name: string) => {
