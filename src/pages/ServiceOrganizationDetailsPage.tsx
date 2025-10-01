@@ -124,6 +124,7 @@ export default function ServiceOrganizationDetailsPage() {
 
   const [loadingItems, setLoadingItems] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState<'toolPrompts' | 'prompts' | 'agents' | 'workflows'>('toolPrompts');
 
   useEffect(() => {
     if (id) {
@@ -795,216 +796,275 @@ export default function ServiceOrganizationDetailsPage() {
               />
             </div>
 
-            {/* Quick Bulk Refresh Buttons */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              <Button
-                onClick={() => bulkRefreshCategory('toolPrompts')}
-                disabled={refreshing.toolPrompts}
-                variant="outline"
-                className="flex items-center justify-center h-20 flex-col space-y-2"
-              >
-                <RefreshCw className={`h-5 w-5 ${refreshing.toolPrompts ? 'animate-spin' : ''}`} />
-                <span className="text-sm font-medium">All Tool Prompts</span>
-                <span className="text-xs text-gray-500">({Array.isArray(availableItems.toolPrompts) ? availableItems.toolPrompts.length : 0} items)</span>
-              </Button>
-
-              <Button
-                onClick={() => bulkRefreshCategory('prompts')}
-                disabled={refreshing.prompts}
-                variant="outline"
-                className="flex items-center justify-center h-20 flex-col space-y-2"
-              >
-                <RefreshCw className={`h-5 w-5 ${refreshing.prompts ? 'animate-spin' : ''}`} />
-                <span className="text-sm font-medium">All Prompts</span>
-                <span className="text-xs text-gray-500">({Array.isArray(availableItems.prompts) ? availableItems.prompts.length : 0} items)</span>
-              </Button>
-
-              <Button
-                onClick={() => bulkRefreshCategory('agents')}
-                disabled={refreshing.agents}
-                variant="outline"
-                className="flex items-center justify-center h-20 flex-col space-y-2"
-              >
-                <RefreshCw className={`h-5 w-5 ${refreshing.agents ? 'animate-spin' : ''}`} />
-                <span className="text-sm font-medium">All Agents</span>
-                <span className="text-xs text-gray-500">({Array.isArray(availableItems.agents) ? availableItems.agents.length : 0} items)</span>
-              </Button>
-
-              <Button
-                onClick={() => bulkRefreshCategory('workflows')}
-                disabled={refreshing.workflows}
-                variant="outline"
-                className="flex items-center justify-center h-20 flex-col space-y-2"
-              >
-                <RefreshCw className={`h-5 w-5 ${refreshing.workflows ? 'animate-spin' : ''}`} />
-                <span className="text-sm font-medium">All Workflows</span>
-                <span className="text-xs text-gray-500">({Array.isArray(availableItems.workflows) ? availableItems.workflows.length : 0} items)</span>
-              </Button>
+            {/* Tab Navigation */}
+            <div className="border-b border-gray-200 mb-6">
+              <nav className="-mb-px flex space-x-8">
+                <button
+                  onClick={() => setActiveTab('toolPrompts')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center ${
+                    activeTab === 'toolPrompts'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <Zap className="h-4 w-4 mr-2" />
+                  Tool Prompts ({Array.isArray(availableItems.toolPrompts) ? availableItems.toolPrompts.length : 0})
+                </button>
+                <button
+                  onClick={() => setActiveTab('prompts')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center ${
+                    activeTab === 'prompts'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <Key className="h-4 w-4 mr-2" />
+                  Prompts ({Array.isArray(availableItems.prompts) ? availableItems.prompts.length : 0})
+                </button>
+                <button
+                  onClick={() => setActiveTab('agents')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center ${
+                    activeTab === 'agents'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Agents ({Array.isArray(availableItems.agents) ? availableItems.agents.length : 0})
+                </button>
+                <button
+                  onClick={() => setActiveTab('workflows')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center ${
+                    activeTab === 'workflows'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <Activity className="h-4 w-4 mr-2" />
+                  Workflows ({Array.isArray(availableItems.workflows) ? availableItems.workflows.length : 0})
+                </button>
+              </nav>
             </div>
 
-            {/* Detailed Items List */}
+            {/* Tab Content */}
             {loadingItems ? (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
             ) : (
-              <div className="space-y-6">
-                {/* Tool Prompts */}
-                <div>
-                  <h4 className="text-md font-semibold text-gray-900 mb-3 flex items-center">
-                    <Zap className="h-4 w-4 mr-2" />
-                    Tool Prompts ({Array.isArray(availableItems.toolPrompts) ? availableItems.toolPrompts.length : 0})
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {Array.isArray(availableItems.toolPrompts) ? availableItems.toolPrompts
-                      .filter(item => 
-                        !searchTerm || 
-                        item.toolName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        item.connectorType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        item.description?.toLowerCase().includes(searchTerm.toLowerCase())
-                      )
-                      .map((item, index) => (
-                        <div key={index} className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50">
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <div className="text-sm font-medium text-gray-900">
-                                {item.toolName} / {item.connectorType}
+              <div>
+                {/* Tool Prompts Tab */}
+                {activeTab === 'toolPrompts' && (
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-md font-semibold text-gray-900 flex items-center">
+                        <Zap className="h-4 w-4 mr-2" />
+                        Tool Prompts
+                      </h4>
+                      <Button
+                        onClick={() => bulkRefreshCategory('toolPrompts')}
+                        disabled={refreshing.toolPrompts}
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center"
+                      >
+                        <RefreshCw className={`h-4 w-4 mr-2 ${refreshing.toolPrompts ? 'animate-spin' : ''}`} />
+                        Refresh All
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {Array.isArray(availableItems.toolPrompts) ? availableItems.toolPrompts
+                        .filter(item => 
+                          !searchTerm || 
+                          item.toolName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          item.connectorType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          item.description?.toLowerCase().includes(searchTerm.toLowerCase())
+                        )
+                        .map((item, index) => (
+                          <div key={index} className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50">
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {item.toolName} / {item.connectorType}
+                                </div>
+                                {item.description && (
+                                  <div className="text-xs text-gray-500 mt-1">{item.description}</div>
+                                )}
                               </div>
-                              {item.description && (
-                                <div className="text-xs text-gray-500 mt-1">{item.description}</div>
-                              )}
+                              <Button
+                                onClick={() => refreshIndividualItem('tool-prompts', item.id, item.toolName, item.connectorType)}
+                                size="sm"
+                                variant="outline"
+                                className="ml-2"
+                              >
+                                <RefreshCw className="h-3 w-3" />
+                              </Button>
                             </div>
-                            <Button
-                              onClick={() => refreshIndividualItem('tool-prompts', item.id, item.toolName, item.connectorType)}
-                              size="sm"
-                              variant="outline"
-                              className="ml-2"
-                            >
-                              <RefreshCw className="h-3 w-3" />
-                            </Button>
                           </div>
-                        </div>
-                      )) : <div className="text-gray-500 text-sm">No tool prompts available</div>}
+                        )) : <div className="text-gray-500 text-sm">No tool prompts available</div>}
+                    </div>
                   </div>
-                </div>
+                )}
 
-                {/* Prompts */}
-                <div>
-                  <h4 className="text-md font-semibold text-gray-900 mb-3 flex items-center">
-                    <Key className="h-4 w-4 mr-2" />
-                    System Prompts ({Array.isArray(availableItems.prompts) ? availableItems.prompts.length : 0})
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {Array.isArray(availableItems.prompts) ? availableItems.prompts
-                      .filter(item => 
-                        !searchTerm || 
-                        item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        item.identifier?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        item.description?.toLowerCase().includes(searchTerm.toLowerCase())
-                      )
-                      .map((item, index) => (
-                        <div key={index} className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50">
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <div className="text-sm font-medium text-gray-900">{item.name || item.identifier}</div>
-                              {item.description && (
-                                <div className="text-xs text-gray-500 mt-1">{item.description}</div>
-                              )}
-                              <div className="text-xs text-gray-400 mt-1">ID: {item.identifier}</div>
+                {/* Prompts Tab */}
+                {activeTab === 'prompts' && (
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-md font-semibold text-gray-900 flex items-center">
+                        <Key className="h-4 w-4 mr-2" />
+                        System Prompts
+                      </h4>
+                      <Button
+                        onClick={() => bulkRefreshCategory('prompts')}
+                        disabled={refreshing.prompts}
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center"
+                      >
+                        <RefreshCw className={`h-4 w-4 mr-2 ${refreshing.prompts ? 'animate-spin' : ''}`} />
+                        Refresh All
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {Array.isArray(availableItems.prompts) ? availableItems.prompts
+                        .filter(item => 
+                          !searchTerm || 
+                          item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          item.identifier?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          item.description?.toLowerCase().includes(searchTerm.toLowerCase())
+                        )
+                        .map((item, index) => (
+                          <div key={index} className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50">
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <div className="text-sm font-medium text-gray-900">{item.name || item.identifier}</div>
+                                {item.description && (
+                                  <div className="text-xs text-gray-500 mt-1">{item.description}</div>
+                                )}
+                                <div className="text-xs text-gray-400 mt-1">ID: {item.identifier}</div>
+                              </div>
+                              <Button
+                                onClick={() => refreshIndividualItem('prompt', item.identifier)}
+                                size="sm"
+                                variant="outline"
+                                className="ml-2"
+                              >
+                                <RefreshCw className="h-3 w-3" />
+                              </Button>
                             </div>
-                            <Button
-                              onClick={() => refreshIndividualItem('prompt', item.identifier)}
-                              size="sm"
-                              variant="outline"
-                              className="ml-2"
-                            >
-                              <RefreshCw className="h-3 w-3" />
-                            </Button>
                           </div>
-                        </div>
-                      )) : <div className="text-gray-500 text-sm">No prompts available</div>}
+                        )) : <div className="text-gray-500 text-sm">No prompts available</div>}
+                    </div>
                   </div>
-                </div>
+                )}
 
-                {/* Agents */}
-                <div>
-                  <h4 className="text-md font-semibold text-gray-900 mb-3 flex items-center">
-                    <Users className="h-4 w-4 mr-2" />
-                    Agent Library ({Array.isArray(availableItems.agents) ? availableItems.agents.length : 0})
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {Array.isArray(availableItems.agents) ? availableItems.agents
-                      .filter(item => 
-                        !searchTerm || 
-                        item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        item.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        item.description?.toLowerCase().includes(searchTerm.toLowerCase())
-                      )
-                      .map((item, index) => (
-                        <div key={index} className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50">
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <div className="text-sm font-medium text-gray-900">{item.name}</div>
-                              {item.description && (
-                                <div className="text-xs text-gray-500 mt-1">{item.description}</div>
-                              )}
-                              {item.category && (
-                                <div className="text-xs text-blue-600 mt-1">Category: {item.category}</div>
-                              )}
+                {/* Agents Tab */}
+                {activeTab === 'agents' && (
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-md font-semibold text-gray-900 flex items-center">
+                        <Users className="h-4 w-4 mr-2" />
+                        Agent Library
+                      </h4>
+                      <Button
+                        onClick={() => bulkRefreshCategory('agents')}
+                        disabled={refreshing.agents}
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center"
+                      >
+                        <RefreshCw className={`h-4 w-4 mr-2 ${refreshing.agents ? 'animate-spin' : ''}`} />
+                        Refresh All
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {Array.isArray(availableItems.agents) ? availableItems.agents
+                        .filter(item => 
+                          !searchTerm || 
+                          item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          item.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          item.description?.toLowerCase().includes(searchTerm.toLowerCase())
+                        )
+                        .map((item, index) => (
+                          <div key={index} className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50">
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <div className="text-sm font-medium text-gray-900">{item.name}</div>
+                                {item.description && (
+                                  <div className="text-xs text-gray-500 mt-1">{item.description}</div>
+                                )}
+                                {item.category && (
+                                  <div className="text-xs text-blue-600 mt-1">Category: {item.category}</div>
+                                )}
+                              </div>
+                              <Button
+                                onClick={() => refreshIndividualItem('agent', item.id)}
+                                size="sm"
+                                variant="outline"
+                                className="ml-2"
+                              >
+                                <RefreshCw className="h-3 w-3" />
+                              </Button>
                             </div>
-                            <Button
-                              onClick={() => refreshIndividualItem('agent', item.id)}
-                              size="sm"
-                              variant="outline"
-                              className="ml-2"
-                            >
-                              <RefreshCw className="h-3 w-3" />
-                            </Button>
                           </div>
-                        </div>
-                      )) : <div className="text-gray-500 text-sm">No agents available</div>}
+                        )) : <div className="text-gray-500 text-sm">No agents available</div>}
+                    </div>
                   </div>
-                </div>
+                )}
 
-                {/* Workflows */}
-                <div>
-                  <h4 className="text-md font-semibold text-gray-900 mb-3 flex items-center">
-                    <Activity className="h-4 w-4 mr-2" />
-                    Workflow Library ({Array.isArray(availableItems.workflows) ? availableItems.workflows.length : 0})
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {Array.isArray(availableItems.workflows) ? availableItems.workflows
-                      .filter(item => 
-                        !searchTerm || 
-                        item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        item.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        item.workflowType?.toLowerCase().includes(searchTerm.toLowerCase())
-                      )
-                      .map((item, index) => (
-                        <div key={index} className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50">
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <div className="text-sm font-medium text-gray-900">{item.name}</div>
-                              {item.category && (
-                                <div className="text-xs text-blue-600 mt-1">Category: {item.category}</div>
-                              )}
-                              {item.workflowType && (
-                                <div className="text-xs text-gray-500 mt-1">Type: {item.workflowType}</div>
-                              )}
+                {/* Workflows Tab */}
+                {activeTab === 'workflows' && (
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-md font-semibold text-gray-900 flex items-center">
+                        <Activity className="h-4 w-4 mr-2" />
+                        Workflow Library
+                      </h4>
+                      <Button
+                        onClick={() => bulkRefreshCategory('workflows')}
+                        disabled={refreshing.workflows}
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center"
+                      >
+                        <RefreshCw className={`h-4 w-4 mr-2 ${refreshing.workflows ? 'animate-spin' : ''}`} />
+                        Refresh All
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {Array.isArray(availableItems.workflows) ? availableItems.workflows
+                        .filter(item => 
+                          !searchTerm || 
+                          item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          item.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          item.workflowType?.toLowerCase().includes(searchTerm.toLowerCase())
+                        )
+                        .map((item, index) => (
+                          <div key={index} className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50">
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <div className="text-sm font-medium text-gray-900">{item.name}</div>
+                                {item.category && (
+                                  <div className="text-xs text-blue-600 mt-1">Category: {item.category}</div>
+                                )}
+                                {item.workflowType && (
+                                  <div className="text-xs text-gray-500 mt-1">Type: {item.workflowType}</div>
+                                )}
+                              </div>
+                              <Button
+                                onClick={() => refreshIndividualItem('workflow', item.id)}
+                                size="sm"
+                                variant="outline"
+                                className="ml-2"
+                              >
+                                <RefreshCw className="h-3 w-3" />
+                              </Button>
                             </div>
-                            <Button
-                              onClick={() => refreshIndividualItem('workflow', item.id)}
-                              size="sm"
-                              variant="outline"
-                              className="ml-2"
-                            >
-                              <RefreshCw className="h-3 w-3" />
-                            </Button>
                           </div>
-                        </div>
-                      )) : <div className="text-gray-500 text-sm">No workflows available</div>}
+                        )) : <div className="text-gray-500 text-sm">No workflows available</div>}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             )}
 
