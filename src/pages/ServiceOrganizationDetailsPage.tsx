@@ -414,62 +414,6 @@ export default function ServiceOrganizationDetailsPage() {
     }
   };
 
-  // Bulk refresh by category
-  const bulkRefreshCategory = async (category: keyof typeof availableItems) => {
-    if (!organization?.selfHosted || !organization?.selfHostedApiUrl) {
-      toast.error('Organization is not self-hosted or API URL is not configured');
-      return;
-    }
-
-    try {
-      setRefreshing(prev => ({ ...prev, [category]: true }));
-      
-      const baseUrl = organization.selfHostedApiUrl.replace(/\/$/, '');
-      const token = localStorage.getItem('service_jwt_token');
-      if (!token) {
-        toast.error('Admin authentication token not found');
-        return;
-      }
-
-      let endpoint = '';
-      if (category === 'toolPrompts') {
-        endpoint = 'tool-prompts';
-      } else if (category === 'prompts') {
-        endpoint = 'prompt/system';
-      } else if (category === 'agents') {
-        endpoint = 'agents/productivity';
-      } else if (category === 'workflows') {
-        endpoint = 'workflows';
-      }
-
-      const url = `${baseUrl}/api/libra/refresh/${endpoint}`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.success) {
-        toast.success(data.message || `${category} refreshed successfully`);
-      } else {
-        throw new Error(data.message || `Failed to refresh ${category}`);
-      }
-    } catch (error) {
-      console.error(`Failed to refresh ${category}:`, error);
-      toast.error(error instanceof Error ? error.message : `Failed to refresh ${category}`);
-    } finally {
-      setRefreshing(prev => ({ ...prev, [category]: false }));
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -861,16 +805,6 @@ export default function ServiceOrganizationDetailsPage() {
                         <Zap className="h-4 w-4 mr-2" />
                         Tool Prompts
                       </h4>
-                      <Button
-                        onClick={() => bulkRefreshCategory('toolPrompts')}
-                        disabled={refreshing.toolPrompts}
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center"
-                      >
-                        <RefreshCw className={`h-4 w-4 mr-2 ${refreshing.toolPrompts ? 'animate-spin' : ''}`} />
-                        Refresh All
-                      </Button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                       {Array.isArray(availableItems.toolPrompts) ? availableItems.toolPrompts
@@ -914,16 +848,6 @@ export default function ServiceOrganizationDetailsPage() {
                         <Key className="h-4 w-4 mr-2" />
                         System Prompts
                       </h4>
-                      <Button
-                        onClick={() => bulkRefreshCategory('prompts')}
-                        disabled={refreshing.prompts}
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center"
-                      >
-                        <RefreshCw className={`h-4 w-4 mr-2 ${refreshing.prompts ? 'animate-spin' : ''}`} />
-                        Refresh All
-                      </Button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                       {Array.isArray(availableItems.prompts) ? availableItems.prompts
@@ -966,16 +890,6 @@ export default function ServiceOrganizationDetailsPage() {
                         <Users className="h-4 w-4 mr-2" />
                         Agent Library
                       </h4>
-                      <Button
-                        onClick={() => bulkRefreshCategory('agents')}
-                        disabled={refreshing.agents}
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center"
-                      >
-                        <RefreshCw className={`h-4 w-4 mr-2 ${refreshing.agents ? 'animate-spin' : ''}`} />
-                        Refresh All
-                      </Button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                       {Array.isArray(availableItems.agents) ? availableItems.agents
@@ -1020,16 +934,6 @@ export default function ServiceOrganizationDetailsPage() {
                         <Activity className="h-4 w-4 mr-2" />
                         Workflow Library
                       </h4>
-                      <Button
-                        onClick={() => bulkRefreshCategory('workflows')}
-                        disabled={refreshing.workflows}
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center"
-                      >
-                        <RefreshCw className={`h-4 w-4 mr-2 ${refreshing.workflows ? 'animate-spin' : ''}`} />
-                        Refresh All
-                      </Button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                       {Array.isArray(availableItems.workflows) ? availableItems.workflows
