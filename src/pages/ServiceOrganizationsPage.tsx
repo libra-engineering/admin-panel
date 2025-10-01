@@ -29,6 +29,8 @@ interface CreateOrgForm {
   name: string;
   domain: string;
   seats: number;
+  selfHosted: boolean;
+  selfHostedApiUrl: string;
 }
 
 
@@ -48,7 +50,9 @@ export default function ServiceOrganizationsPage() {
   const [createForm, setCreateForm] = useState<CreateOrgForm>({
     name: '',
     domain: '',
-    seats: 1
+    seats: 1,
+    selfHosted: false,
+    selfHostedApiUrl: ''
   });
 
   useEffect(() => {
@@ -96,7 +100,7 @@ export default function ServiceOrganizationsPage() {
       await serviceApi.createOrganization(createForm);
       
       setSuccess(`Organization "${createForm.name}" created successfully!`);
-      setCreateForm({ name: '', domain: '', seats: 1 });
+      setCreateForm({ name: '', domain: '', seats: 1, selfHosted: false, selfHostedApiUrl: '' });
       setShowCreateModal(false);
       
       // Refresh the organizations list
@@ -109,7 +113,7 @@ export default function ServiceOrganizationsPage() {
     }
   };
 
-  const handleFormChange = (field: keyof CreateOrgForm, value: string | number) => {
+  const handleFormChange = (field: keyof CreateOrgForm, value: string | number | boolean) => {
     setCreateForm(prev => ({ ...prev, [field]: value }));
     // Clear messages when user starts typing
     if (error) setError(null);
@@ -203,7 +207,7 @@ export default function ServiceOrganizationsPage() {
                   size="sm"
                   onClick={() => {
                     setShowCreateModal(false);
-                    setCreateForm({ name: '', domain: '', seats: 1 });
+                    setCreateForm({ name: '', domain: '', seats: 1, selfHosted: false, selfHostedApiUrl: '' });
                     setError(null);
                     setSuccess(null);
                   }}
@@ -212,62 +216,91 @@ export default function ServiceOrganizationsPage() {
                 </Button>
               </div>
               <Card>
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2  gap-4">
-              <div>
-                <label className="block text-sm text-left font-medium text-gray-700 mb-1">Organization Name *</label>
-                <Input
-                  value={createForm.name}
-                  onChange={(e) => handleFormChange('name', e.target.value)}
-                  placeholder="Enter organization name"
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-left font-medium text-gray-700 mb-1">Domain *</label>
-                <Input
-                  value={createForm.domain}
-                  onChange={(e) => handleFormChange('domain', e.target.value)}
-                  placeholder="example.com"
-                  className="w-full"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm text-left font-medium text-gray-700 mb-1">Seats *</label>
-                <Input
-                  type="number"
-                  min="1"
-                  value={createForm.seats}
-                  onChange={(e) => handleFormChange('seats', parseInt(e.target.value) || 1)}
-                  placeholder="Number of seats"
-                  className="w-full max-w-xs"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end space-x-3 mt-6">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowCreateModal(false);
-                  setCreateForm({ name: '', domain: '', seats: 1 });
-                  setError(null);
-                  setSuccess(null);
-                }}
-                disabled={isSubmitting}
-              >
-                <X className="h-4 w-4 mr-2" />
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCreateOrganization}
-                disabled={isSubmitting || !createForm.name || !createForm.domain || createForm.seats < 1}
-              >
-                <Save className="h-4 w-4 mr-2" />
-                {isSubmitting ? 'Creating...' : 'Create Organization'}
-              </Button>
-            </div>
-          </div>
-        </Card>
+                <div className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm text-left font-medium text-gray-700 mb-1">Organization Name *</label>
+                      <Input
+                        value={createForm.name}
+                        onChange={(e) => handleFormChange('name', e.target.value)}
+                        placeholder="Enter organization name"
+                        className="w-full"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-left font-medium text-gray-700 mb-1">Domain *</label>
+                      <Input
+                        value={createForm.domain}
+                        onChange={(e) => handleFormChange('domain', e.target.value)}
+                        placeholder="example.com"
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm text-left font-medium text-gray-700 mb-1">Seats *</label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={createForm.seats}
+                        onChange={(e) => handleFormChange('seats', parseInt(e.target.value) || 1)}
+                        placeholder="Number of seats"
+                        className="w-full max-w-xs"
+                      />
+                    </div>
+                    <div className="md:col-span-2 flex items-center space-x-2 mt-2">
+                      <input
+                        id="selfHosted"
+                        type="checkbox"
+                        checked={!!createForm.selfHosted}
+                        onChange={(e) => handleFormChange('selfHosted', e.target.checked)}
+                        className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                      />
+                      <label htmlFor="selfHosted" className="block text-sm font-medium text-gray-700">
+                        Self-hosted
+                      </label>
+                    </div>
+                    {createForm.selfHosted && (
+                      <div className="md:col-span-2">
+                        <label className="block text-sm text-left font-medium text-gray-700 mb-1">Self-hosted API URL *</label>
+                        <Input
+                          value={createForm.selfHostedApiUrl || ''}
+                          onChange={(e) => handleFormChange('selfHostedApiUrl', e.target.value)}
+                          placeholder="https://api.example.com"
+                          className="w-full"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex justify-end space-x-3 mt-6">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setShowCreateModal(false);
+                        setCreateForm({ name: '', domain: '', seats: 1, selfHosted: false, selfHostedApiUrl: '' });
+                        setError(null);
+                        setSuccess(null);
+                      }}
+                      disabled={isSubmitting}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleCreateOrganization}
+                      disabled={
+                        isSubmitting ||
+                        !createForm.name ||
+                        !createForm.domain ||
+                        createForm.seats < 1 ||
+                        (createForm.selfHosted && !createForm.selfHostedApiUrl)
+                      }
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {isSubmitting ? 'Creating...' : 'Create Organization'}
+                    </Button>
+                  </div>
+                </div>
+              </Card>
             </div>
           </div>
         </div>

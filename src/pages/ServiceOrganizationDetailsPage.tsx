@@ -47,6 +47,8 @@ interface Organization {
   domain?: string;
   seats: number;
   active: boolean;
+  selfHosted: boolean;
+  selfHostedApiUrl?: string;
   createdAt: string;
   updatedAt: string;
   apiKeys?: ApiKey[];
@@ -57,6 +59,8 @@ interface EditOrgForm {
   name: string;
   domain: string;
   seats: number;
+  selfHosted: boolean;
+  selfHostedApiUrl: string;
 }
 
 const PURPOSES = {
@@ -85,7 +89,9 @@ export default function ServiceOrganizationDetailsPage() {
   const [editForm, setEditForm] = useState<EditOrgForm>({
     name: '',
     domain: '',
-    seats: 1
+    seats: 1,
+    selfHosted: false,
+    selfHostedApiUrl: ''
   });
 
   useEffect(() => {
@@ -107,7 +113,9 @@ export default function ServiceOrganizationDetailsPage() {
       setEditForm({
         name: orgDetails.name,
         domain: orgDetails.domain || '',
-        seats: orgDetails.seats
+        seats: orgDetails.seats,
+        selfHosted: orgDetails.selfHosted || false,
+        selfHostedApiUrl: orgDetails.selfHostedApiUrl || ''
       });
     } catch (error) {
       console.error('Failed to fetch organization details:', error);
@@ -120,6 +128,11 @@ export default function ServiceOrganizationDetailsPage() {
   const handleEditOrganization = async () => {
     if (!editForm.name || !editForm.domain || editForm.seats < 1 || !organization) {
       toast.error('Please fill in all required fields with valid values');
+      return;
+    }
+
+    if (editForm.selfHosted && !editForm.selfHostedApiUrl) {
+      toast.error('Please provide a self-hosted API URL when self-hosted is enabled');
       return;
     }
 
@@ -141,7 +154,7 @@ export default function ServiceOrganizationDetailsPage() {
     }
   };
 
-  const handleEditFormChange = (field: keyof EditOrgForm, value: string | number) => {
+  const handleEditFormChange = (field: keyof EditOrgForm, value: string | number | boolean) => {
     setEditForm(prev => ({ ...prev, [field]: value }));
     // Clear messages when user starts typing
   };
@@ -234,7 +247,9 @@ export default function ServiceOrganizationDetailsPage() {
                   setEditForm({
                     name: organization.name,
                     domain: organization.domain || '',
-                    seats: organization.seats
+                    seats: organization.seats,
+                    selfHosted: organization.selfHosted || false,
+                    selfHostedApiUrl: organization.selfHostedApiUrl || ''
                   });
                 }}
               >
@@ -344,6 +359,29 @@ export default function ServiceOrganizationDetailsPage() {
                     className="w-full"
                   />
                 </div>
+                <div className="flex items-center space-x-2 mt-2">
+                  <input
+                    id="selfHosted"
+                    type="checkbox"
+                    checked={!!editForm.selfHosted}
+                    onChange={(e) => handleEditFormChange('selfHosted', e.target.checked)}
+                    className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                  />
+                  <label htmlFor="selfHosted" className="block text-sm font-medium text-gray-700">
+                    Self-hosted
+                  </label>
+                </div>
+                {editForm.selfHosted && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Self-hosted API URL *</label>
+                    <Input
+                      value={editForm.selfHostedApiUrl || ''}
+                      onChange={(e) => handleEditFormChange('selfHostedApiUrl', e.target.value)}
+                      placeholder="https://api.example.com"
+                      className="w-full"
+                    />
+                  </div>
+                )}
               </div>
             ) : (
               <div className="space-y-4">
@@ -359,6 +397,18 @@ export default function ServiceOrganizationDetailsPage() {
                   <span className="text-sm font-medium text-gray-500">Seats</span>
                   <span className="text-sm text-gray-900 font-semibold">{organization.seats}</span>
                 </div>
+                <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                  <span className="text-sm font-medium text-gray-500">Self-hosted</span>
+                  <Badge variant={organization.selfHosted ? "success" : "default"}>
+                    {organization.selfHosted ? "Yes" : "No"}
+                  </Badge>
+                </div>
+                {organization.selfHosted && organization.selfHostedApiUrl && (
+                  <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                    <span className="text-sm font-medium text-gray-500">API URL</span>
+                    <span className="text-sm text-gray-900 font-mono">{organization.selfHostedApiUrl}</span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between py-3 border-b border-gray-100">
                   <span className="text-sm font-medium text-gray-500">Status</span>
                   {getStatusBadge(organization.active)}
