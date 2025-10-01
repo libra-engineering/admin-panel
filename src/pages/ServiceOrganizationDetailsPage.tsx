@@ -66,6 +66,30 @@ interface EditOrgForm {
   selfHostedApiUrl: string;
 }
 
+interface UsageUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  title: string;
+  function: string;
+  createdAt: string;
+  updatedAt: string;
+  noOfChats: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalTokens: number;
+  noOfUserMemories: number;
+  onboardingComplete: boolean;
+}
+
+interface UsageData {
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalTokens: number;
+  users: UsageUser[];
+}
+
 const PURPOSES = {
   fc_search: 'FirstClass Search',
   fc_scrape: 'FirstClass Scrape', 
@@ -86,6 +110,8 @@ export default function ServiceOrganizationDetailsPage() {
   
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [usageData, setUsageData] = useState<UsageData | null>(null);
+  const [isLoadingUsage, setIsLoadingUsage] = useState(false);
 
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -134,6 +160,12 @@ export default function ServiceOrganizationDetailsPage() {
   }, [id]);
 
   useEffect(() => {
+    if (organization?.selfHosted && organization?.selfHostedApiUrl && id) {
+      fetchUsageData(id);
+    }
+  }, [organization?.selfHosted, organization?.selfHostedApiUrl, id]);
+
+  useEffect(() => {
     if (organization?.selfHosted && organization?.selfHostedApiUrl) {
       fetchAvailableItems();
     }
@@ -161,6 +193,44 @@ export default function ServiceOrganizationDetailsPage() {
       toast.error(error instanceof Error ? error.message : 'Failed to fetch organization details');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchUsageData = async (orgId: string) => {
+    if (!organization?.selfHosted || !organization?.selfHostedApiUrl) {
+      return;
+    }
+
+    try {
+      setIsLoadingUsage(true);
+      
+      const baseUrl = organization.selfHostedApiUrl.replace(/\/$/, ''); // Remove trailing slash
+      const url = `${baseUrl}/api/libra/usage`;
+      
+      const token = localStorage.getItem('service_jwt_token');
+      if (!token) {
+        toast.error('Admin authentication token not found');
+        return;
+      }
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const usage = await response.json() as UsageData;
+      setUsageData(usage);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to fetch usage data from self-hosted instance');
+    } finally {
+      setIsLoadingUsage(false);
     }
   };
 
@@ -511,12 +581,55 @@ export default function ServiceOrganizationDetailsPage() {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+
+      <Card className="border-l-4 border-l-blue-500">
+          <div className="p-6">
+            <div className="flex items-center">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Total API Keys</p>
+                <p className="text-2xl font-bold text-gray-900">
+                {organization.apiKeys?.length || 0}
+                </p>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+
+        <Card className="border-l-4 border-l-blue-500">
+          <div className="p-6">
+            <div className="flex items-center">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Billed Seats</p>
+                <p className="text-2xl font-bold text-gray-900">
+                {organization.seats}
+                </p>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="border-l-4 border-l-purple-500">
+          <div className="p-6">
+            <div className="flex items-center">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Input Tokens</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {usageData ? usageData.totalInputTokens.toLocaleString() : 'Loading...'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </Card>
+
         <Card className="border-l-4 border-l-blue-500">
           <div className="p-6">
             <div className="flex items-center">
               <div>
                 <p className="text-sm font-medium text-gray-500">Total Credits Used</p>
-                <p className="text-2xl font-bold text-gray-900">{getTotalCreditsUsed(organization.usageMetrics)}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                {getTotalCreditsUsed(organization.usageMetrics)}
+                </p>
               </div>
             </div>
           </div>
@@ -527,31 +640,49 @@ export default function ServiceOrganizationDetailsPage() {
             <div className="flex items-center">
               <div>
                 <p className="text-sm font-medium text-gray-500">Active API Keys</p>
-                <p className="text-2xl font-bold text-gray-900">{getActiveApiKeysCount(organization.apiKeys)}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                {getActiveApiKeysCount(organization.apiKeys)}
+                </p>
               </div>
             </div>
           </div>
         </Card>
 
-        <Card className="border-l-4 border-l-blue-500">
+        <Card className="border-l-4 border-l-green-500">
           <div className="p-6">
             <div className="flex items-center">
-             
               <div>
-                <p className="text-sm font-medium text-gray-500">Seats</p>
-                <p className="text-2xl font-bold text-gray-900">{organization.seats}</p>
+                <p className="text-sm font-medium text-gray-500">Number of Users Registered</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {usageData ? usageData.users.length : 'Loading...'}
+                </p>
               </div>
             </div>
           </div>
         </Card>
 
+
         <Card className="border-l-4 border-l-blue-500">
           <div className="p-6">
             <div className="flex items-center">
-             
               <div>
-                <p className="text-sm font-medium text-gray-500">Total API Keys</p>
-                <p className="text-2xl font-bold text-gray-900">{organization.apiKeys?.length || 0}</p>
+                <p className="text-sm font-medium text-gray-500">Total Tokens</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {usageData ? usageData.totalTokens.toLocaleString() : 'Loading...'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="border-l-4 border-l-orange-500">
+          <div className="p-6">
+            <div className="flex items-center">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Output Tokens</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {usageData ? usageData.totalOutputTokens.toLocaleString() : 'Loading...'}
+                </p>
               </div>
             </div>
           </div>
@@ -1015,12 +1146,137 @@ export default function ServiceOrganizationDetailsPage() {
         </Card>
       )}
 
-      {/* Usage Metrics */}
+      {/* Usage and Users Data */}
+      {organization?.selfHosted && organization?.selfHostedApiUrl ? (
+        usageData ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            {/* Users List */}
+            <Card>
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                    <Users className="h-5 w-5 mr-2" />
+                    Users ({usageData.users.length})
+                  </h3>
+                  <Button
+                    onClick={() => fetchUsageData(id!)}
+                    disabled={isLoadingUsage}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center"
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingUsage ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </Button>
+                </div>
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {usageData.users.map((user) => (
+                  <div key={user.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <h4 className="text-sm font-medium text-gray-900">{user.name}</h4>
+                          <Badge variant={user.role === 'superadmin' ? 'success' : 'default'}>
+                            {user.role}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-gray-500">{user.email}</p>
+                        <p className="text-xs text-gray-400">{user.title} • {user.function}</p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xs text-gray-500">
+                          {user.noOfChats} chats
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {user.totalTokens.toLocaleString()} tokens
+                        </div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 mt-3 text-xs">
+                      <div>
+                        <span className="text-gray-500">Input:</span>
+                        <span className="ml-1 font-medium">{user.totalInputTokens.toLocaleString()}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Output:</span>
+                        <span className="ml-1 font-medium">{user.totalOutputTokens.toLocaleString()}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Memories:</span>
+                        <span className="ml-1 font-medium">{user.noOfUserMemories}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Onboarded:</span>
+                        <Badge variant={user.onboardingComplete ? 'success' : 'error'} className="ml-1">
+                          {user.onboardingComplete ? 'Yes' : 'No'}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="text-xs text-gray-400 mt-2">
+                      Joined: {formatDate(user.createdAt)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Card>
+        </div>
+        ) : (
+          <Card>
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <BarChart3 className="h-5 w-5 mr-2" />
+                  Usage & Users Data
+                </h3>
+                <Button
+                  onClick={() => fetchUsageData(id!)}
+                  disabled={isLoadingUsage}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center"
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingUsage ? 'animate-spin' : ''}`} />
+                  {isLoadingUsage ? 'Loading...' : 'Load Data'}
+                </Button>
+              </div>
+              {isLoadingUsage ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>Click "Load Data" to fetch usage and user information</p>
+                  <p className="text-sm text-gray-400 mt-1">Data will be fetched from: {organization.selfHostedApiUrl}/api/libra/usage</p>
+                </div>
+              )}
+            </div>
+          </Card>
+        )
+      ) : (
+        <Card>
+          <div className="p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+              <BarChart3 className="h-5 w-5 mr-2" />
+              Usage & Users Data
+            </h3>
+            <div className="text-center py-8 text-gray-500">
+              <Server className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <p>Usage and user data is only available for self-hosted organizations</p>
+              <p className="text-sm text-gray-400 mt-1">This organization is not self-hosted or API URL is not configured</p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Legacy Usage Metrics */}
       {organization.usageMetrics && organization.usageMetrics.length > 0 && (
         <Card>
           <div className="p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-              Usage Activity
+              Legacy Usage Activity
             </h3>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
