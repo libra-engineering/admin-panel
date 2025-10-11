@@ -12,6 +12,8 @@ export const ROUTES = {
   DASHBOARD: '/dashboard',
   HOME: '/',
   ADMIN: '/admin',
+  ADMIN_PROVIDERS: '/admin/providers',
+  ADMIN_MODELS: '/admin/models',
   ORGANIZATIONS: '/admin/organizations',
   USERS: '/admin/users',
   TOKEN_USAGE: '/admin/token-usage',

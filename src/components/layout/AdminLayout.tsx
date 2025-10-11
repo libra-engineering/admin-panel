@@ -2,8 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAppSelector } from "@/hooks/useAppSelector";
 import { authAPI } from "@/services/api";
-import { Bot, Building2, CreditCard, LayoutDashboard, MessageCircle, Server, ServerCogIcon, SquareArrowOutUpRight, Users, Wrench } from "lucide-react";
-
+import { Bot, Building2, CreditCard, LayoutDashboard, MessageCircle, Package, Server, ServerCogIcon, Shapes, SquareArrowOutUpRight, Users, Wrench } from "lucide-react";
+import { ROUTES } from "@/lib/constants";
 
 
 export default function AdminLayout() {
@@ -39,6 +39,16 @@ export default function AdminLayout() {
       name: "Connectors",
       href: "/admin/connectors",
       icon: <Server />,
+    },
+    {
+      name: "Providers",
+      href: ROUTES.ADMIN_PROVIDERS,
+      icon: <Package />,
+    },
+    {
+      name: "Models",
+      href: ROUTES.ADMIN_MODELS,
+      icon: <Shapes />,
     },
     { name: 'Tools', href: '/admin/tools', 
       icon: <Wrench />,

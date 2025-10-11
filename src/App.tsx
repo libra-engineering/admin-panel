@@ -13,6 +13,8 @@ import PromptsPage from '@/pages/PromptsPage'
 import PromptEditor from '@/pages/PromptEditor'
 import ToolEditor from '@/pages/ToolEditor'
 import LogsPage from '@/pages/LogsPage'
+import AdminProvidersPage from '@/pages/AdminProvidersPage'
+import AdminModelsPage from '@/pages/AdminModelsPage'
 import ServiceLoginPage from '@/pages/ServiceLoginPage'
 import ServiceDashboard from '@/pages/ServiceDashboard'
 import ServiceLayout from '@/components/layout/ServiceLayout'
@@ -75,6 +77,8 @@ const AppContent = () => {
             <Route path="users" element={<UsersPage />} />
             <Route path="token-usage" element={<TokenUsagePage />} />
             <Route path="connectors" element={<ConnectorsPage />} />
+            <Route path="providers" element={<AdminProvidersPage />} />
+            <Route path="models" element={<AdminModelsPage />} />
             <Route path="tools" element={<ToolsPage />} />
             <Route path="tools/editor/:toolKey" element={<ToolEditor />} />
             <Route path="prompts/editor/:identifier" element={<PromptEditor />} />

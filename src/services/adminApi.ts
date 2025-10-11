@@ -29,7 +29,14 @@ import type {
   ConnectorsResponse,
   EnvConfig,
   BulkToolPromptsCsvResponse,
-  BulkImportPromptsCsvResponse
+  BulkImportPromptsCsvResponse,
+  Provider,
+  Model,
+  CreateProviderInput,
+  UpdateProviderInput,
+  CreateModelInput,
+  UpdateModelInput,
+  ModelType
 } from '../types/admin'
 
 const API_BASE = '/admin'
@@ -390,6 +397,58 @@ export const adminApi = {
 
   async deleteAdminEnvVariable(key: string): Promise<{ message: string }> {
     const response = await api.delete(`${API_BASE}/config/${key}`)
+    return response.data
+  },
+
+  // Provider Management
+  async getProviders(): Promise<Provider[]> {
+    const response = await api.get(`${API_BASE}/providers`)
+    return response.data?.data || response.data
+  },
+
+  async createProvider(input: CreateProviderInput): Promise<Provider> {
+    const response = await api.post(`${API_BASE}/providers`, input)
+    return response.data?.data || response.data
+  },
+
+  async updateProvider(id: string, input: UpdateProviderInput): Promise<Provider> {
+    const response = await api.put(`${API_BASE}/providers/${encodeURIComponent(id)}`, input)
+    return response.data?.data || response.data
+  },
+
+  async deleteProvider(id: string): Promise<{ message: string }> {
+    const response = await api.delete(`${API_BASE}/providers/${encodeURIComponent(id)}`)
+    return response.data
+  },
+
+  // Model Management
+  async getModels(params: { organizationId: string; provider?: string; type?: string }): Promise<Model[]> {
+    const response = await api.get(`${API_BASE}/models`, { params })
+    return response.data?.data || response.data
+  },
+
+  async getModelById(id: string, organizationId: string): Promise<Model> {
+    const response = await api.get(`${API_BASE}/models/${encodeURIComponent(id)}`, { params: { organizationId } })
+    return response.data?.data || response.data
+  },
+
+  async createModel(input: CreateModelInput): Promise<Model> {
+    const response = await api.post(`${API_BASE}/models`, input)
+    return response.data?.data || response.data
+  },
+
+  async updateModel(id: string, input: UpdateModelInput): Promise<Model> {
+    const response = await api.put(`${API_BASE}/models/${encodeURIComponent(id)}`, input)
+    return response.data?.data || response.data
+  },
+
+  async deleteModel(id: string): Promise<{ message: string }> {
+    const response = await api.delete(`${API_BASE}/models/${encodeURIComponent(id)}`)
+    return response.data
+  },
+
+  async setModelForAllOrganizations(input: { model: string; providerId: string; type: ModelType }): Promise<{ message: string; count: number }> {
+    const response = await api.post(`${API_BASE}/models/org`, input)
     return response.data
   }
 } 
