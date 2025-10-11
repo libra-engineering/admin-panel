@@ -1,83 +1,132 @@
-import  { useEffect, useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
-import { Badge } from '../components/ui/badge'
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table'
-import { adminApi } from '../services/adminApi'
-import type { ConnectorStats, Connector, ConnectorsResponse } from '../types/admin'
+import { useEffect, useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "../components/ui/table";
+import { adminApi } from "../services/adminApi";
+import type {
+  ConnectorStats,
+  Connector,
+  ConnectorsResponse,
+} from "../types/admin";
+import { Button } from "@/components/ui/button";
+import { RefreshCcw, Trash } from "lucide-react";
+import { toast } from "sonner";
 
 export default function ConnectorsPage() {
-  const [connectorStats, setConnectorStats] = useState<ConnectorStats | null>(null)
-  const [connectors, setConnectors] = useState<Connector[]>([])
-  const [connectorsResponse, setConnectorsResponse] = useState<ConnectorsResponse | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [connectorStats, setConnectorStats] = useState<ConnectorStats | null>(
+    null
+  );
+  const [connectors, setConnectors] = useState<Connector[]>([]);
+  const [connectorsResponse, setConnectorsResponse] =
+    useState<ConnectorsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [syncingConnectorId, setSyncingConnectorId] = useState<string | null>(null);
+  const [deletingConnectorId, setDeletingConnectorId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    fetchData();
+  }, []);
 
   const fetchData = async () => {
     try {
-      setLoading(true)
+      setLoading(true);
       const [statsData, connectorsData] = await Promise.all([
         adminApi.getConnectorStats(),
-        adminApi.getConnectors()
-      ])
-      setConnectorStats(statsData)
-      setConnectorsResponse(connectorsData)
-      setConnectors(connectorsData.connectors) // Extract connectors array from response
+        adminApi.getConnectors(),
+      ]);
+      setConnectorStats(statsData);
+      setConnectorsResponse(connectorsData);
+      setConnectors(connectorsData.connectors); // Extract connectors array from response
     } catch (error) {
-      console.error('Failed to fetch connector data:', error)
+      console.error("Failed to fetch connector data:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
+
+  const handleSyncConnector = async (connectorId: string) => {
+    try {
+      setSyncingConnectorId(connectorId);
+      await adminApi.syncConnector(connectorId);
+      await fetchData();
+      toast.success("Connector sync initiated successfully!");
+    } catch (error) {
+      console.error("Failed to sync connector:", error);
+      toast.error("Failed to sync connector. Please try again.");
+    } finally {
+      setSyncingConnectorId(null);
+    }
+  };
+
+  const handleDeleteConnector = async (connectorId: string) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this connector? This action cannot be undone."
+    );
+    if (!confirmed) return;
+
+    try {
+      setDeletingConnectorId(connectorId);
+      await adminApi.deleteConnector(connectorId);
+      await fetchData();
+      toast.success("Connector deleted successfully!");
+    } catch (error) {
+      console.error("Failed to delete connector:", error);
+      toast.error("Failed to delete connector. Please try again.");
+    } finally {
+      setDeletingConnectorId(null);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'syncCompleted':
-        return 'success'
-      case 'syncStarted':
-        return 'warning'
-      case 'syncFailed':
-        return 'error'
+      case "syncCompleted":
+        return "success";
+      case "syncStarted":
+        return "warning";
+      case "syncFailed":
+        return "error";
       default:
-        return 'default'
+        return "default";
     }
-  }
+  };
 
-  const getConnectorTypeIcon = (type: string) => {
-    const icons: Record<string, string> = {
-      googleDrive: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z',
-      slack: 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z',
-      github: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4',
-      notion: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
-      postgres: 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4',
-      mysql: 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4'
-    }
-    return icons[type] || 'M13 10V3L4 14h7v7l9-11h-7z'
-  }
 
   const formatConnectorType = (type: string) => {
-    return type.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()).trim()
-  }
+    return type
+      .replace(/([A-Z])/g, " $1")
+      .replace(/^./, (str) => str.toUpperCase())
+      .trim();
+  };
 
   const formatDate = (date: string | null | undefined) => {
-    if (!date) return 'Never'
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
+    if (!date) return "Never";
+    return new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-lg">Loading connector statistics...</div>
       </div>
-    )
+    );
   }
 
   return (
@@ -93,13 +142,25 @@ export default function ConnectorsPage() {
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  <svg
+                    className="w-5 h-5 text-blue-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
                   </svg>
                 </div>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Total Connectors</p>
+                <p className="text-sm font-medium text-gray-500">
+                  Total Connectors
+                </p>
                 <p className="text-2xl font-semibold text-gray-900">
                   {connectorStats?.totalConnectors.toLocaleString()}
                 </p>
@@ -113,13 +174,25 @@ export default function ConnectorsPage() {
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <svg
+                    className="w-5 h-5 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
                   </svg>
                 </div>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Active Connectors</p>
+                <p className="text-sm font-medium text-gray-500">
+                  Active Connectors
+                </p>
                 <p className="text-2xl font-semibold text-gray-900">
                   {connectorStats?.activeConnectors.toLocaleString()}
                 </p>
@@ -127,8 +200,6 @@ export default function ConnectorsPage() {
             </div>
           </CardContent>
         </Card>
-
-
       </div>
 
       {/* Connectors Table */}
@@ -138,7 +209,8 @@ export default function ConnectorsPage() {
             <CardTitle>All Connectors</CardTitle>
             {connectorsResponse && (
               <div className="text-sm text-gray-500">
-                Showing {connectorsResponse.connectors.length} of {connectorsResponse.pagination.total} connectors
+                Showing {connectorsResponse.connectors.length} of{" "}
+                {connectorsResponse.pagination.total} connectors
               </div>
             )}
           </div>
@@ -153,7 +225,7 @@ export default function ConnectorsPage() {
                 <TableHead>Organization</TableHead>
                 <TableHead>User</TableHead>
                 <TableHead>Last Synced</TableHead>
-                <TableHead>Created</TableHead>
+                <TableHead>Actions </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -161,15 +233,15 @@ export default function ConnectorsPage() {
                 <TableRow key={connector.id}>
                   <TableCell>
                     <div className="flex items-center">
-                        <div className="font-medium text-gray-900">
-                          {connector.name && connector.name.length > 30 ? (
-                            <span title={connector.name}>
-                              {connector.name.substring(0, 30)}&hellip;
-                            </span>
-                          ) : (
-                            connector.name
-                          )}
-                        </div>
+                      <div className="font-medium text-gray-900">
+                        {connector.name && connector.name.length > 30 ? (
+                          <span title={connector.name}>
+                            {connector.name.substring(0, 30)}&hellip;
+                          </span>
+                        ) : (
+                          connector.name
+                        )}
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -185,20 +257,21 @@ export default function ConnectorsPage() {
                   <TableCell>
                     <div>
                       <div className="text-sm font-medium text-gray-900">
-                        {connector.organizationName || 'Unknown'}
+                        {connector.organizationName || "Unknown"}
                       </div>
                       <div className="text-xs text-gray-500">
-                        {connector.organizationDomain || connector.organizationId}
+                        {connector.organizationDomain ||
+                          connector.organizationId}
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div>
                       <div className="text-sm font-medium text-gray-900">
-                        {connector.userName || 'Unknown'}
+                        {connector.userName || "Unknown"}
                       </div>
                       <div className="text-xs text-gray-500">
-                        {connector.userEmail || '—'}
+                        {connector.userEmail || "—"}
                       </div>
                     </div>
                   </TableCell>
@@ -208,9 +281,32 @@ export default function ConnectorsPage() {
                     </span>
                   </TableCell>
                   <TableCell>
-                    <span className="text-sm text-gray-600">
-                      {formatDate(connector.createdAt)}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSyncConnector(connector.id)}
+                        disabled={syncingConnectorId === connector.id || deletingConnectorId === connector.id}
+                        className="h-8 px-2 hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                        title="Sync connector"
+                      >
+                        <RefreshCcw 
+                          className={`h-4 w-4 text-blue-600 ${
+                            syncingConnectorId === connector.id ? "animate-spin" : ""
+                          }`} 
+                        />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteConnector(connector.id)}
+                        disabled={deletingConnectorId === connector.id || syncingConnectorId === connector.id}
+                        className="h-8 px-2 hover:bg-red-50 hover:border-red-300 transition-colors"
+                        title="Delete connector"
+                      >
+                        <Trash className="h-4 w-4 text-red-600" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -264,18 +360,21 @@ export default function ConnectorsPage() {
                 </span>
               </div> */}
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Inactive Connectors</span>
+                <span className="text-sm text-gray-600">
+                  Inactive Connectors
+                </span>
                 <span className="text-lg font-semibold text-yellow-600">
-                  {connectorStats ? 
-                    connectorStats.totalConnectors - connectorStats.activeConnectors : 0
-                  }
+                  {connectorStats
+                    ? connectorStats.totalConnectors -
+                      connectorStats.activeConnectors
+                    : 0}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Failed Syncs</span>
                 <span className="text-lg font-semibold text-red-600">
                   {connectorStats?.connectorStats
-                    .filter(stat => stat.status === 'syncFailed')
+                    .filter((stat) => stat.status === "syncFailed")
                     .reduce((sum, stat) => sum + stat._count.id, 0) || 0}
                 </span>
               </div>
@@ -284,5 +383,5 @@ export default function ConnectorsPage() {
         </Card>
       </div>
     </div>
-  )
-} 
+  );
+}

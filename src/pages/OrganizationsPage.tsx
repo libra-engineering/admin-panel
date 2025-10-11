@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -20,6 +21,7 @@ import { adminApi } from "../services/adminApi";
 import type { Organization } from "../types/admin";
 
 export default function OrganizationsPage() {
+  const navigate = useNavigate();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -147,28 +149,16 @@ export default function OrganizationsPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleEdit(org)}
-                      >
-                        Edit
-                      </Button>
-                      {/* <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          window.open(
-                            `/admin/organizations/${org.id}`,
-                            "_blank"
-                          )
-                        }
+                        onClick={() => navigate(`/admin/organizations/${org.id}`)}
                       >
                         View
-                      </Button> */}
+                      </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => window.open(`/admin/organizations/${org.id}/config`, "_blank")}
+                        onClick={() => handleEdit(org)}
                       >
-                        Env Config
+                        Edit
                       </Button>
                       <Button
                         variant="outline"

@@ -4,9 +4,13 @@ import { adminApi } from '@/services/adminApi'
 
 type EntryMap = Record<string, string>
 
-export default function OrganizationConfigPage() {
+interface OrganizationConfigPageProps {
+  organizationId?: string;
+}
+
+export default function OrganizationConfigPage({ organizationId: propOrgId }: OrganizationConfigPageProps = {}) {
   const { organizationId } = useParams<{ organizationId: string }>()
-  const orgId = organizationId || ''
+  const orgId = propOrgId || organizationId || ''
 
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)

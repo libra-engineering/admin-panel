@@ -100,8 +100,19 @@ export const adminApi = {
     return response.data
   },
 
-  async getConnectors(): Promise<ConnectorsResponse> {
-    const response = await api.get(`${API_BASE}/connectors`)
+  async getConnectors(organizationId?: string): Promise<ConnectorsResponse> {
+    const params = organizationId ? { organizationId } : {};
+    const response = await api.get(`${API_BASE}/connectors`, { params })
+    return response.data
+  },
+
+  async syncConnector(id: string): Promise<{ message: string }> {
+    const response = await api.post(`${API_BASE}/connectors/${id}/sync`)
+    return response.data
+  },
+
+  async deleteConnector(id: string): Promise<{ message: string }> {
+    const response = await api.delete(`${API_BASE}/connectors/${id}`)
     return response.data
   },
 
