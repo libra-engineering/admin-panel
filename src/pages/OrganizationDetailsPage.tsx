@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { adminApi } from '@/services/adminApi';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { 
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { adminApi } from "@/services/adminApi";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
   ArrowLeft,
   Edit,
   Save,
@@ -13,10 +13,14 @@ import {
   Plug,
   Building2,
   RefreshCw,
-  Trash
-} from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import type { Organization, Connector, ConnectorsResponse } from '../types/admin';
+  Trash,
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import type {
+  Organization,
+  Connector,
+  ConnectorsResponse,
+} from "../types/admin";
 import {
   Table,
   TableHeader,
@@ -25,8 +29,8 @@ import {
   TableHead,
   TableCell,
 } from "../components/ui/table";
-import OrganizationConfigPage from './OrganizationConfigPage';
-import { toast } from 'sonner';
+import OrganizationConfigPage from "./OrganizationConfigPage";
+import { toast } from "sonner";
 
 interface EditOrgForm {
   name: string;
@@ -38,25 +42,32 @@ interface EditOrgForm {
 export default function OrganizationDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  
+
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'info' | 'env' | 'connectors'>('info');
-  
+  const [activeTab, setActiveTab] = useState<"info" | "env" | "connectors">(
+    "info"
+  );
+
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editForm, setEditForm] = useState<EditOrgForm>({
-    name: '',
-    emailDomain: '',
+    name: "",
+    emailDomain: "",
     verified: false,
-    allowModelChange: false
+    allowModelChange: false,
   });
 
   // Connectors state
   const [connectors, setConnectors] = useState<Connector[]>([]);
   const [loadingConnectors, setLoadingConnectors] = useState(false);
-  const [syncingConnectorId, setSyncingConnectorId] = useState<string | null>(null);
-  const [deletingConnectorId, setDeletingConnectorId] = useState<string | null>(null);
+  const [syncingConnectorId, setSyncingConnectorId] = useState<string | null>(
+    null
+  );
+  const [deletingConnectorId, setDeletingConnectorId] = useState<string | null>(
+    null
+  );
+  const [wsConnected, setWsConnected] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -65,9 +76,83 @@ export default function OrganizationDetailsPage() {
   }, [id]);
 
   useEffect(() => {
-    if (id && activeTab === 'connectors') {
+    if (id && activeTab === "connectors") {
       fetchConnectors(id);
     }
+  }, [id, activeTab]);
+
+  // WebSocket
+  useEffect(() => {
+    if (!id || activeTab !== "connectors") return;
+
+    const backendUrl =
+      import.meta.env.VITE_BACKEND_API_URL || "http://localhost:3000";
+    const url = new URL(backendUrl);
+    const protocol = url.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = `${protocol}//${url.host}/ws/admin/connector-progress?organizationId=${id}`;
+
+    let ws: WebSocket | null = null;
+    let reconnectTimeout: NodeJS.Timeout | null = null;
+
+    const connect = () => {
+      try {
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          console.log("WebSocket connected");
+          setWsConnected(true);
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+
+            setConnectors((prev) =>
+              prev.map((connector) => {
+                if (connector.id === data.connectorId) {
+                  return {
+                    ...connector,
+                    syncedData: data.syncedData,
+                    totalData: data.totalData,
+                    status: data.status || connector.status,
+                  };
+                }
+                return connector;
+              })
+            );
+          } catch (error) {
+            console.error("Failed to parse WebSocket message:", error);
+          }
+        };
+
+        ws.onerror = (error) => {
+          console.error("WebSocket error:", error);
+          setWsConnected(false);
+        };
+
+        ws.onclose = () => {
+          console.log("WebSocket closed, reconnecting in 3s...");
+          setWsConnected(false);
+
+          reconnectTimeout = setTimeout(() => {
+            connect();
+          }, 3000);
+        };
+      } catch (error) {
+        console.error("Failed to create WebSocket connection:", error);
+      }
+    };
+
+    connect();
+
+    return () => {
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+    };
   }, [id, activeTab]);
 
   const fetchOrganizationDetails = async (orgId: string) => {
@@ -79,11 +164,11 @@ export default function OrganizationDetailsPage() {
         name: orgDetails.name,
         emailDomain: orgDetails.emailDomain,
         verified: orgDetails.verified,
-        allowModelChange: orgDetails.allowModelChange
+        allowModelChange: orgDetails.allowModelChange,
       });
     } catch (error) {
-      console.error('Failed to fetch organization details:', error);
-      toast.error('Failed to fetch organization details');
+      console.error("Failed to fetch organization details:", error);
+      toast.error("Failed to fetch organization details");
     } finally {
       setIsLoading(false);
     }
@@ -95,8 +180,8 @@ export default function OrganizationDetailsPage() {
       const response: ConnectorsResponse = await adminApi.getConnectors(orgId);
       setConnectors(response.connectors);
     } catch (error) {
-      console.error('Failed to fetch connectors:', error);
-      toast.error('Failed to fetch connectors');
+      console.error("Failed to fetch connectors:", error);
+      toast.error("Failed to fetch connectors");
     } finally {
       setLoadingConnectors(false);
     }
@@ -104,26 +189,29 @@ export default function OrganizationDetailsPage() {
 
   const handleEditOrganization = async () => {
     if (!editForm.name || !editForm.emailDomain || !organization) {
-      alert('Please fill in all required fields');
+      alert("Please fill in all required fields");
       return;
     }
 
     try {
       setIsSubmitting(true);
       await adminApi.updateOrganization(organization.id, editForm);
-      toast.success('Organization updated successfully!');
+      toast.success("Organization updated successfully!");
       setIsEditing(false);
       await fetchOrganizationDetails(organization.id);
     } catch (error) {
-      console.error('Failed to update organization:', error);
-      toast.error('Failed to update organization');
+      console.error("Failed to update organization:", error);
+      toast.error("Failed to update organization");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleEditFormChange = (field: keyof EditOrgForm, value: string | boolean) => {
-    setEditForm(prev => ({ ...prev, [field]: value }));
+  const handleEditFormChange = (
+    field: keyof EditOrgForm,
+    value: string | boolean
+  ) => {
+    setEditForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSyncConnector = async (connectorId: string) => {
@@ -160,9 +248,11 @@ export default function OrganizationDetailsPage() {
   };
 
   const getStatusBadge = (active: boolean) => {
-    return active ? 
-      <Badge variant="success">Verified</Badge> : 
-      <Badge variant="warning">Unverified</Badge>;
+    return active ? (
+      <Badge variant="success">Verified</Badge>
+    ) : (
+      <Badge variant="warning">Unverified</Badge>
+    );
   };
 
   const formatDate = (dateString: string) => {
@@ -189,6 +279,63 @@ export default function OrganizationDetailsPage() {
     }
   };
 
+  const renderSyncProgress = (connector: Connector) => {
+    const isDb = connector.type === "postgres" || connector.type === "mysql";
+    const isAnalyzing = isDb && connector.status === "syncStarted";
+    const hasFailed = connector.status === "syncFailed";
+
+    if (isAnalyzing) {
+      return (
+        <div className="flex items-center space-x-2">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+          <span className="text-xs text-gray-600">Analyzing database...</span>
+        </div>
+      );
+    }
+
+    if (hasFailed) {
+      return <span className="text-xs text-red-600">Sync failed</span>;
+    }
+
+    if (
+      connector.totalData !== undefined &&
+      connector.syncedData !== undefined &&
+      connector.totalData > 0
+    ) {
+      const percentage = Math.min(
+        100,
+        Math.round(
+          (connector.syncedData / Math.max(1, connector.totalData)) * 100
+        )
+      );
+
+      return (
+        <div className="w-48">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs text-gray-600">
+              {connector.syncedData} of {connector.totalData} items synced
+            </span>
+            <span className="text-xs font-medium text-gray-700">
+              {percentage}%
+            </span>
+          </div>
+          <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-emerald-500 rounded-full transition-all duration-500 ease-in-out"
+              style={{
+                width: `${percentage}%`,
+              }}
+            ></div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <span className="text-xs text-gray-500">No sync data available</span>
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -203,7 +350,7 @@ export default function OrganizationDetailsPage() {
         <div className="flex items-center space-x-4">
           <Button
             variant="outline"
-            onClick={() => navigate('/admin/organizations')}
+            onClick={() => navigate("/admin/organizations")}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Organizations
@@ -223,10 +370,10 @@ export default function OrganizationDetailsPage() {
         <div className="flex items-center space-x-4">
           <Button
             variant="outline"
-            onClick={() => navigate('/admin/organizations')}
+            onClick={() => navigate("/admin/organizations")}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back 
+            Back
           </Button>
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center">
@@ -255,7 +402,7 @@ export default function OrganizationDetailsPage() {
                     name: organization.name,
                     emailDomain: organization.emailDomain,
                     verified: organization.verified,
-                    allowModelChange: organization.allowModelChange
+                    allowModelChange: organization.allowModelChange,
                   });
                 }}
               >
@@ -268,7 +415,7 @@ export default function OrganizationDetailsPage() {
                 className="flex items-center"
               >
                 <Save className="h-4 w-4 mr-2" />
-                {isSubmitting ? 'Saving...' : 'Save'}
+                {isSubmitting ? "Saving..." : "Save"}
               </Button>
             </div>
           )}
@@ -279,33 +426,33 @@ export default function OrganizationDetailsPage() {
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex space-x-8">
           <button
-            onClick={() => setActiveTab('info')}
+            onClick={() => setActiveTab("info")}
             className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center ${
-              activeTab === 'info'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              activeTab === "info"
+                ? "border-blue-500 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
             }`}
           >
             <Building2 className="h-4 w-4 mr-2" />
             Organization Info
           </button>
           <button
-            onClick={() => setActiveTab('env')}
+            onClick={() => setActiveTab("env")}
             className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center ${
-              activeTab === 'env'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              activeTab === "env"
+                ? "border-blue-500 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
             }`}
           >
             <Settings className="h-4 w-4 mr-2" />
             Env Config
           </button>
           <button
-            onClick={() => setActiveTab('connectors')}
+            onClick={() => setActiveTab("connectors")}
             className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center ${
-              activeTab === 'connectors'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              activeTab === "connectors"
+                ? "border-blue-500 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
             }`}
           >
             <Plug className="h-4 w-4 mr-2" />
@@ -315,7 +462,7 @@ export default function OrganizationDetailsPage() {
       </div>
 
       {/* Tab Content */}
-      {activeTab === 'info' && (
+      {activeTab === "info" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Organization Details */}
           <Card>
@@ -331,7 +478,9 @@ export default function OrganizationDetailsPage() {
                     </label>
                     <Input
                       value={editForm.name}
-                      onChange={(e) => handleEditFormChange('name', e.target.value)}
+                      onChange={(e) =>
+                        handleEditFormChange("name", e.target.value)
+                      }
                       placeholder="Organization name"
                       className="w-full"
                     />
@@ -342,7 +491,9 @@ export default function OrganizationDetailsPage() {
                     </label>
                     <Input
                       value={editForm.emailDomain}
-                      onChange={(e) => handleEditFormChange('emailDomain', e.target.value)}
+                      onChange={(e) =>
+                        handleEditFormChange("emailDomain", e.target.value)
+                      }
                       placeholder="example.com"
                       className="w-full"
                     />
@@ -352,10 +503,15 @@ export default function OrganizationDetailsPage() {
                       id="verified"
                       type="checkbox"
                       checked={editForm.verified}
-                      onChange={(e) => handleEditFormChange('verified', e.target.checked)}
+                      onChange={(e) =>
+                        handleEditFormChange("verified", e.target.checked)
+                      }
                       className="h-4 w-4 text-blue-600 border-gray-300 rounded"
                     />
-                    <label htmlFor="verified" className="text-sm font-medium text-gray-700">
+                    <label
+                      htmlFor="verified"
+                      className="text-sm font-medium text-gray-700"
+                    >
                       Verified
                     </label>
                   </div>
@@ -364,10 +520,18 @@ export default function OrganizationDetailsPage() {
                       id="allowModelChange"
                       type="checkbox"
                       checked={editForm.allowModelChange}
-                      onChange={(e) => handleEditFormChange('allowModelChange', e.target.checked)}
+                      onChange={(e) =>
+                        handleEditFormChange(
+                          "allowModelChange",
+                          e.target.checked
+                        )
+                      }
                       className="h-4 w-4 text-blue-600 border-gray-300 rounded"
                     />
-                    <label htmlFor="allowModelChange" className="text-sm font-medium text-gray-700">
+                    <label
+                      htmlFor="allowModelChange"
+                      className="text-sm font-medium text-gray-700"
+                    >
                       Allow Model Change
                     </label>
                   </div>
@@ -375,32 +539,58 @@ export default function OrganizationDetailsPage() {
               ) : (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                    <span className="text-sm font-medium text-gray-500">Name</span>
-                    <span className="text-sm text-gray-900 font-semibold">{organization.name}</span>
+                    <span className="text-sm font-medium text-gray-500">
+                      Name
+                    </span>
+                    <span className="text-sm text-gray-900 font-semibold">
+                      {organization.name}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                    <span className="text-sm font-medium text-gray-500">Email Domain</span>
-                    <span className="text-sm text-gray-900">@{organization.emailDomain}</span>
+                    <span className="text-sm font-medium text-gray-500">
+                      Email Domain
+                    </span>
+                    <span className="text-sm text-gray-900">
+                      @{organization.emailDomain}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                    <span className="text-sm font-medium text-gray-500">Verified</span>
-                    <Badge variant={organization.verified ? "success" : "warning"}>
+                    <span className="text-sm font-medium text-gray-500">
+                      Verified
+                    </span>
+                    <Badge
+                      variant={organization.verified ? "success" : "warning"}
+                    >
                       {organization.verified ? "Yes" : "No"}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                    <span className="text-sm font-medium text-gray-500">Allow Model Change</span>
-                    <Badge variant={organization.allowModelChange ? "success" : "default"}>
+                    <span className="text-sm font-medium text-gray-500">
+                      Allow Model Change
+                    </span>
+                    <Badge
+                      variant={
+                        organization.allowModelChange ? "success" : "default"
+                      }
+                    >
                       {organization.allowModelChange ? "Yes" : "No"}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                    <span className="text-sm font-medium text-gray-500">Created</span>
-                    <span className="text-sm text-gray-900">{formatDate(organization.createdAt)}</span>
+                    <span className="text-sm font-medium text-gray-500">
+                      Created
+                    </span>
+                    <span className="text-sm text-gray-900">
+                      {formatDate(organization.createdAt)}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between py-3">
-                    <span className="text-sm font-medium text-gray-500">Last Updated</span>
-                    <span className="text-sm text-gray-900">{formatDate(organization.updatedAt)}</span>
+                    <span className="text-sm font-medium text-gray-500">
+                      Last Updated
+                    </span>
+                    <span className="text-sm text-gray-900">
+                      {formatDate(organization.updatedAt)}
+                    </span>
                   </div>
                 </div>
               )}
@@ -415,13 +605,17 @@ export default function OrganizationDetailsPage() {
               </h3>
               <div className="space-y-4">
                 <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                  <span className="text-sm font-medium text-gray-500">Total Users</span>
+                  <span className="text-sm font-medium text-gray-500">
+                    Total Users
+                  </span>
                   <span className="text-2xl font-bold text-gray-900">
                     {organization._count?.users || 0}
                   </span>
                 </div>
                 <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                  <span className="text-sm font-medium text-gray-500">Total Connectors</span>
+                  <span className="text-sm font-medium text-gray-500">
+                    Total Connectors
+                  </span>
                   <span className="text-2xl font-bold text-gray-900">
                     {organization._count?.connectors || 0}
                   </span>
@@ -432,18 +626,17 @@ export default function OrganizationDetailsPage() {
         </div>
       )}
 
-      {activeTab === 'env' && id && (
+      {activeTab === "env" && id && (
         <OrganizationConfigPage organizationId={id} />
       )}
 
-      {activeTab === 'connectors' && (
+      {activeTab === "connectors" && (
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-semibold text-gray-900">
                 Connectors ({connectors.length})
               </h3>
-              
             </div>
 
             {loadingConnectors ? (
@@ -487,9 +680,9 @@ export default function OrganizationDetailsPage() {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={getConnectorStatusColor(connector.status) as any}>
-                          {connector.status}
-                        </Badge>
+                        <div className="space-y-2">
+                          {renderSyncProgress(connector)}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div>
@@ -503,7 +696,7 @@ export default function OrganizationDetailsPage() {
                       </TableCell>
                       <TableCell>
                         <span className="text-sm text-gray-600">
-                          {connector.lastSynced 
+                          {connector.lastSynced
                             ? formatDate(connector.lastSynced)
                             : "Never"}
                         </span>
@@ -514,21 +707,30 @@ export default function OrganizationDetailsPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleSyncConnector(connector.id)}
-                            disabled={syncingConnectorId === connector.id || deletingConnectorId === connector.id}
+                            disabled={
+                              syncingConnectorId === connector.id ||
+                              deletingConnectorId === connector.id
+                            }
                             className="h-8 px-2 hover:bg-blue-50 hover:border-blue-300 transition-colors"
                             title="Sync connector"
                           >
-                            <RefreshCw 
-                              className={`h-4 w-4 text-blue-600 ${
-                                syncingConnectorId === connector.id ? "animate-spin" : ""
-                              }`} 
+                            <RefreshCw
+                              className={`h-3 w-3 mr-1  ${
+                                syncingConnectorId === connector.id
+                                  ? "animate-spin"
+                                  : ""
+                              }`}
                             />
+                            <span className="text-xs text-gray-600">Sync</span>
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleDeleteConnector(connector.id)}
-                            disabled={deletingConnectorId === connector.id || syncingConnectorId === connector.id}
+                            disabled={
+                              deletingConnectorId === connector.id ||
+                              syncingConnectorId === connector.id
+                            }
                             className="h-8 px-2 hover:bg-red-50 hover:border-red-300 transition-colors"
                             title="Delete connector"
                           >
@@ -547,4 +749,3 @@ export default function OrganizationDetailsPage() {
     </div>
   );
 }
-

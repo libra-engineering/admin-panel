@@ -102,6 +102,63 @@ export default function ConnectorsPage() {
     }
   };
 
+  const renderSyncProgress = (connector: Connector) => {
+    const isDb = connector.type === "postgres" || connector.type === "mysql";
+    const isAnalyzing = isDb && connector.status === "syncStarted";
+    const hasFailed = connector.status === "syncFailed";
+
+    if (isAnalyzing) {
+      return (
+        <div className="flex items-center space-x-2">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+          <span className="text-xs text-gray-600">Analyzing database...</span>
+        </div>
+      );
+    }
+
+    if (hasFailed) {
+      return <span className="text-xs text-red-600">Sync failed</span>;
+    }
+
+    if (
+      connector.totalData !== undefined &&
+      connector.syncedData !== undefined &&
+      connector.totalData > 0
+    ) {
+      const percentage = Math.min(
+        100,
+        Math.round(
+          (connector.syncedData / Math.max(1, connector.totalData)) * 100
+        )
+      );
+
+      return (
+        <div className="w-48">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs text-gray-600">
+              {connector.syncedData} of {connector.totalData} items synced
+            </span>
+            <span className="text-xs font-medium text-gray-700">
+              {percentage}%
+            </span>
+          </div>
+          <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-emerald-500 rounded-full transition-all duration-500 ease-in-out"
+              style={{
+                width: `${percentage}%`,
+              }}
+            ></div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <span className="text-xs text-gray-500">No sync data available</span>
+    );
+  };
+
 
   const formatConnectorType = (type: string) => {
     return type
@@ -250,9 +307,9 @@ export default function ConnectorsPage() {
                     </span>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={getStatusColor(connector.status) as any}>
-                      {connector.status}
-                    </Badge>
+                    <div className="space-y-2">
+                      {renderSyncProgress(connector)}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div>
@@ -290,11 +347,14 @@ export default function ConnectorsPage() {
                         className="h-8 px-2 hover:bg-blue-50 hover:border-blue-300 transition-colors"
                         title="Sync connector"
                       >
-                        <RefreshCcw 
-                          className={`h-4 w-4 text-blue-600 ${
-                            syncingConnectorId === connector.id ? "animate-spin" : ""
-                          }`} 
-                        />
+                        <RefreshCcw
+                              className={`h-3 w-3 mr-1  ${
+                                syncingConnectorId === connector.id
+                                  ? "animate-spin"
+                                  : ""
+                              }`}
+                            />
+                            <span className="text-xs text-gray-600">Sync</span>
                       </Button>
                       <Button
                         variant="outline"

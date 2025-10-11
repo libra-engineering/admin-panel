@@ -87,6 +87,8 @@ export interface Connector {
   userEmail?: string;
   dataCount?: number;
   syncStatus?: string;
+  totalData?: number;
+  syncedData?: number;
 }
 
 export interface TokenUsage {
