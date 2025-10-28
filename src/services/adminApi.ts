@@ -173,7 +173,7 @@ export const adminApi = {
     connectorType: string,
     data: CreateToolPromptRequest
   ): Promise<CreateToolPromptResponse> {
-    const response = await api.post(`${API_BASE}/tools/org/${encodeURIComponent(connectorType)}`, data)
+    const response = await api.post(`${API_BASE}/tools/${encodeURIComponent(connectorType)}`, data)
     return response.data
   },
 
