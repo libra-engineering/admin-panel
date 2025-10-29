@@ -229,6 +229,263 @@ export interface TokenUsageStats {
   }>;
 }
 
+export interface TokenUsageOverview {
+  period: number;
+  startDate: string;
+  endDate: string;
+  filters: {
+    organizationId: string | null;
+    userId: string | null;
+    purpose: string | null;
+  };
+  summary: {
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    inputCost: number;
+    outputCost: number;
+    totalCost: number;
+    avgCostPerDay: number;
+    totalRequests: number;
+  };
+  averages: {
+    avgInputTokens: number;
+    avgOutputTokens: number;
+    avgTotalTokens: number;
+    avgInputCost: number;
+    avgOutputCost: number;
+    avgTotalCost: number;
+  };
+}
+
+export interface TokenUsageOrganization {
+  organizationId: string;
+  organizationName: string;
+  organizationDomain: string;
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  inputCost: number;
+  outputCost: number;
+  totalCost: number;
+  avgCostPerDay: number;
+  requestCount: number;
+  userCount: number;
+}
+
+export interface TokenUsageOrganizationsResponse {
+  period: number;
+  filters: {
+    purpose: string | null;
+  };
+  pagination: {
+    total: number;
+    limit: number | null;
+    offset: number;
+  };
+  organizations: TokenUsageOrganization[];
+}
+
+export interface TokenUsageOrganizationDetail {
+  period: number;
+  organization: {
+    id: string;
+    name: string;
+    emailDomain: string;
+  };
+  filters: {
+    purpose: string | null;
+  };
+  summary: {
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    inputCost: number;
+    outputCost: number;
+    totalCost: number;
+    avgCostPerDay: number;
+    requestCount: number;
+  };
+  users: Array<{
+    userId: string;
+    userName: string | null;
+    userEmail: string;
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    inputCost: number;
+    outputCost: number;
+    totalCost: number;
+    avgCostPerDay: number;
+    requestCount: number;
+  }>;
+  dailyBreakdown: Array<{
+    timestamp: string;
+    _sum: {
+      inputTokens: number;
+      outputTokens: number;
+      totalTokens: number;
+      inputCost: number;
+      outputCost: number;
+      totalCost: number;
+    };
+    _count: {
+      id: number;
+    };
+  }>;
+}
+
+export interface TokenUsageUser {
+  userId: string;
+  userName: string | null;
+  userEmail: string;
+  userRole: string;
+  organizationId: string;
+  organizationName: string;
+  organizationDomain: string;
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  inputCost: number;
+  outputCost: number;
+  totalCost: number;
+  avgCostPerDay: number;
+  requestCount: number;
+}
+
+export interface TokenUsageUsersResponse {
+  period: number;
+  filters: {
+    organizationId: string | null;
+    purpose: string | null;
+  };
+  pagination: {
+    total: number;
+    limit: number | null;
+    offset: number;
+  };
+  users: TokenUsageUser[];
+}
+
+export interface TokenUsageUserDetail {
+  period: number;
+  user: {
+    userId: string;
+    userName: string | null;
+    userEmail: string;
+    userRole: string;
+    organization: {
+      id: string;
+      name: string;
+      emailDomain: string;
+    };
+  };
+  summary: {
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    inputCost: number;
+    outputCost: number;
+    totalCost: number;
+    avgCostPerDay: number;
+    requestCount: number;
+  };
+  purposes: Array<{
+    purpose: string;
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    inputCost: number;
+    outputCost: number;
+    totalCost: number;
+    requestCount: number;
+  }>;
+  models: Array<{
+    model: string;
+    provider: string;
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    inputCost: number;
+    outputCost: number;
+    totalCost: number;
+    requestCount: number;
+  }>;
+  dailyBreakdown: Array<{
+    timestamp: string;
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    inputCost: number;
+    outputCost: number;
+    totalCost: number;
+    requestCount: number;
+  }>;
+}
+
+export interface TokenUsagePurpose {
+  purpose: string;
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  inputCost: number;
+  outputCost: number;
+  totalCost: number;
+  avgCostPerDay: number;
+  requestCount: number;
+}
+
+export interface TokenUsagePurposesResponse {
+  period: number;
+  filters: {
+    organizationId: string | null;
+    userId: string | null;
+  };
+  purposes: TokenUsagePurpose[];
+}
+
+export interface TokenUsageModel {
+  model: string;
+  provider: string;
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  inputCost: number;
+  outputCost: number;
+  totalCost: number;
+  avgCostPerDay: number;
+  requestCount: number;
+}
+
+export interface TokenUsageModelsResponse {
+  period: number;
+  filters: {
+    organizationId: string | null;
+    userId: string | null;
+    purpose: string | null;
+  };
+  models: TokenUsageModel[];
+}
+
+export interface TokenUsageDailyBreakdown {
+  period: number;
+  filters: {
+    organizationId: string | null;
+    userId: string | null;
+    purpose: string | null;
+  };
+  dailyBreakdown: Array<{
+    date: string;
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    inputCost: number;
+    outputCost: number;
+    totalCost: number;
+    requestCount: number;
+  }>;
+}
+
 export interface PaginatedResponse<T> {
   data: T[];
   pagination: {
@@ -518,6 +775,40 @@ export interface AIChatDeltaEvent {
   sequenceNumber: number;
   patches: AIChatDeltaPatch[];
   timestamp: string;
+}
+
+export interface AvailablePurposesResponse {
+  purposes: string[];
+  count: number;
+}
+
+export interface OrganizationUser {
+  id: string;
+  name: string | null;
+  email: string;
+  role: string;
+  title: string | null;
+  function: string | null;
+  verified: boolean;
+  onboardingComplete: boolean;
+  createdAt: string;
+  updatedAt: string;
+  stats?: {
+    totalTokens: number;
+    totalCost: number;
+    requestCount: number;
+    chatCount: number;
+  };
+}
+
+export interface OrganizationUsersResponse {
+  organization: {
+    id: string;
+    name: string;
+    emailDomain: string | null;
+  };
+  users: OrganizationUser[];
+  count: number;
 }
 
 // Token size estimate response

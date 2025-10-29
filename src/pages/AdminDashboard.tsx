@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { adminApi } from '../services/adminApi'
-import type { SystemStats, ConnectorStats, TokenUsageStats } from '../types/admin'
+import type { SystemStats, ConnectorStats, TokenUsageOverview } from '../types/admin'
 
 export default function AdminDashboard() {
   const [systemStats, setSystemStats] = useState<SystemStats | null>(null)
   const [connectorStats, setConnectorStats] = useState<ConnectorStats | null>(null)
-  const [tokenStats, setTokenStats] = useState<TokenUsageStats | null>(null)
+  const [tokenStats, setTokenStats] = useState<TokenUsageOverview | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -15,7 +15,7 @@ export default function AdminDashboard() {
         const [stats, connectors, tokens] = await Promise.all([
           adminApi.getSystemStats(),
           adminApi.getConnectorStats(),
-          adminApi.getTokenUsageStats(30)
+          adminApi.getTokenUsageOverview({ period: 30 })
         ])
         
         setSystemStats(stats)
@@ -157,7 +157,7 @@ export default function AdminDashboard() {
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Average Tokens/Day</span>
                 <span className="text-lg font-semibold">
-                  {Math.round((tokenStats?.summary.averageTokens || 0) / 30).toLocaleString()}
+                  {Math.round((tokenStats?.averages.avgTotalTokens || 0)).toLocaleString()}
                 </span>
               </div>
             </div>
@@ -179,7 +179,7 @@ export default function AdminDashboard() {
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Average Cost/Day</span>
                 <span className="text-lg font-semibold">
-                  ${((tokenStats?.summary.averageCost || 0) / 30).toFixed(2)}
+                  ${tokenStats?.summary.avgCostPerDay.toFixed(2) || '0.00'}
                 </span>
               </div>
             </div>

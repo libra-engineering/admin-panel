@@ -36,7 +36,17 @@ import type {
   UpdateProviderInput,
   CreateModelInput,
   UpdateModelInput,
-  ModelType
+  ModelType,
+  TokenUsageOverview,
+  TokenUsageOrganizationsResponse,
+  TokenUsageOrganizationDetail,
+  TokenUsageUsersResponse,
+  TokenUsageUserDetail,
+  TokenUsagePurposesResponse,
+  TokenUsageModelsResponse,
+  TokenUsageDailyBreakdown,
+  AvailablePurposesResponse,
+  OrganizationUsersResponse
 } from '../types/admin'
 
 const API_BASE = '/admin'
@@ -120,6 +130,113 @@ export const adminApi = {
     const params: Record<string, any> = { period }
     if (organizationId) params.organizationId = organizationId
     const response = await api.get(`${API_BASE}/token-usage/stats`, { params })
+    return response.data
+  },
+
+  async getTokenUsageOverview(params?: {
+    period?: number;
+    organizationId?: string;
+    userId?: string;
+    purpose?: string;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<TokenUsageOverview> {
+    const response = await api.get(`${API_BASE}/token-usage/overview`, { params })
+    return response.data
+  },
+
+  async getTokenUsageOrganizations(params?: {
+    period?: number;
+    purpose?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+    limit?: number;
+    offset?: number;
+  }): Promise<TokenUsageOrganizationsResponse> {
+    const response = await api.get(`${API_BASE}/token-usage/organizations`, { params })
+    return response.data
+  },
+
+  async getTokenUsageOrganizationDetail(organizationId: string, params?: {
+    period?: number;
+    purpose?: string;
+    includeUsers?: boolean;
+    includeDaily?: boolean;
+  }): Promise<TokenUsageOrganizationDetail> {
+    const response = await api.get(`${API_BASE}/token-usage/organizations/${organizationId}`, { params })
+    return response.data
+  },
+
+  async getTokenUsageUsers(params?: {
+    period?: number;
+    organizationId?: string;
+    purpose?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+    limit?: number;
+    offset?: number;
+  }): Promise<TokenUsageUsersResponse> {
+    const response = await api.get(`${API_BASE}/token-usage/users`, { params })
+    return response.data
+  },
+
+  async getTokenUsageUserDetail(userId: string, params?: {
+    period?: number;
+    includePurposes?: boolean;
+    includeDaily?: boolean;
+    includeModels?: boolean;
+  }): Promise<TokenUsageUserDetail> {
+    const response = await api.get(`${API_BASE}/token-usage/users/${userId}`, { params })
+    return response.data
+  },
+
+  async getTokenUsagePurposes(params?: {
+    period?: number;
+    organizationId?: string;
+    userId?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<TokenUsagePurposesResponse> {
+    const response = await api.get(`${API_BASE}/token-usage/purposes`, { params })
+    return response.data
+  },
+
+  async getTokenUsageModels(params?: {
+    period?: number;
+    organizationId?: string;
+    userId?: string;
+    purpose?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<TokenUsageModelsResponse> {
+    const response = await api.get(`${API_BASE}/token-usage/models`, { params })
+    return response.data
+  },
+
+  async getTokenUsageDaily(params?: {
+    period?: number;
+    organizationId?: string;
+    userId?: string;
+    purpose?: string;
+  }): Promise<TokenUsageDailyBreakdown> {
+    const response = await api.get(`${API_BASE}/token-usage/daily`, { params })
+    return response.data
+  },
+
+  async getAvailablePurposes(): Promise<AvailablePurposesResponse> {
+    const response = await api.get(`${API_BASE}/token-usage/purposes/list`)
+    return response.data
+  },
+
+  async getOrganizationUsers(
+    organizationId: string,
+    params?: {
+      includeStats?: boolean;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    }
+  ): Promise<OrganizationUsersResponse> {
+    const response = await api.get(`${API_BASE}/token-usage/organizations/${organizationId}/users`, { params })
     return response.data
   },
 
