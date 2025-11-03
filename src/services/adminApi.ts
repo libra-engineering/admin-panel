@@ -48,7 +48,8 @@ import type {
   AvailablePurposesResponse,
   OrganizationUsersResponse,
   UserChat,
-  UserChatsResponse
+  UserChatsResponse,
+  UserServiceUsageResponse
 } from '../types/admin'
 
 const API_BASE = '/admin'
@@ -96,10 +97,21 @@ export const adminApi = {
     return response.data
   },
 
-  async getUserChats(userId: string, page: number = 1, limit: number = 10): Promise<UserChatsResponse> {
-    const response = await api.get(`${API_BASE}/users/${userId}/chats`, {
-      params: { page, limit }
-    })
+  async getUserChats(userId: string, page: number = 1, limit: number = 10, days?: number): Promise<UserChatsResponse> {
+    const params: any = { page, limit }
+    if (days) {
+      params.days = days
+    }
+    const response = await api.get(`${API_BASE}/users/${userId}/chats`, { params })
+    return response.data
+  },
+
+  async getUserServiceUsage(userId: string, page: number = 1, limit: number = 10, days?: number): Promise<UserServiceUsageResponse> {
+    const params: any = { page, limit }
+    if (days) {
+      params.days = days
+    }
+    const response = await api.get(`${API_BASE}/users/${userId}/service-usage`, { params })
     return response.data
   },
 

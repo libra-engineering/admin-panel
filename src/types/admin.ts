@@ -199,6 +199,25 @@ export interface UserChatsResponse {
   };
 }
 
+export interface ServiceUsage {
+  id: string;
+  userId: string;
+  organizationId: string;
+  purpose: string;
+  creditsUsed: number;
+  timestamp: string;
+}
+
+export interface UserServiceUsageResponse {
+  serviceUsage: ServiceUsage[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+}
+
 export interface SystemStats {
   totalOrganizations: number;
   totalUsers: number;
