@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table'
 import { Badge } from '../components/ui/badge'
@@ -9,6 +10,7 @@ import { adminApi } from '../services/adminApi'
 import type { User, Organization, UserFilters } from '../types/admin'
 
 export default function UsersPage() {
+  const navigate = useNavigate()
   const [users, setUsers] = useState<User[]>([])
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [loading, setLoading] = useState(true)
@@ -228,7 +230,7 @@ export default function UsersPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => window.open(`/admin/users/${user.id}`, '_blank')}
+                        onClick={() => navigate(`/admin/users/${user.id}`)}
                       >
                         View
                       </Button>

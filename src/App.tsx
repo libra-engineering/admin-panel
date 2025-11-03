@@ -6,6 +6,7 @@ import AdminLayout from '@/components/layout/AdminLayout'
 import AdminDashboard from '@/pages/AdminDashboard'
 import OrganizationsPage from '@/pages/OrganizationsPage'
 import UsersPage from '@/pages/UsersPage'
+import UserDetailPage from '@/pages/UserDetailPage'
 import TokenUsagePage from '@/pages/TokenUsagePage'
 import ConnectorsPage from '@/pages/ConnectorsPage'
 import ToolsPage from '@/pages/ToolsPage'
@@ -77,6 +78,7 @@ const AppContent = () => {
             <Route path="organizations" element={<OrganizationsPage />} />
             <Route path="organizations/:id" element={<OrganizationDetailsPage />} />
             <Route path="users" element={<UsersPage />} />
+            <Route path="users/:id" element={<UserDetailPage />} />
             <Route path="token-usage" element={<TokenUsagePage />} />
             <Route path="connectors" element={<ConnectorsPage />} />
             <Route path="providers" element={<AdminProvidersPage />} />

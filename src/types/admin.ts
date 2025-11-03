@@ -176,6 +176,29 @@ export interface Chat {
   organizationId?: string;
 }
 
+export interface UserChat {
+  chatId: string;
+  numberOfMessages: number;
+  numberOfAIMessages: number;
+  numberOfUserMessages: number;
+  inputTokenCost: number;
+  outputTokenCost: number;
+  totalCost: number;
+  title: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserChatsResponse {
+  chats: UserChat[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+}
+
 export interface SystemStats {
   totalOrganizations: number;
   totalUsers: number;

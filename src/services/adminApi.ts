@@ -46,7 +46,9 @@ import type {
   TokenUsageModelsResponse,
   TokenUsageDailyBreakdown,
   AvailablePurposesResponse,
-  OrganizationUsersResponse
+  OrganizationUsersResponse,
+  UserChat,
+  UserChatsResponse
 } from '../types/admin'
 
 const API_BASE = '/admin'
@@ -91,6 +93,13 @@ export const adminApi = {
 
   async deleteUser(id: string): Promise<{ message: string }> {
     const response = await api.delete(`${API_BASE}/users/${id}`)
+    return response.data
+  },
+
+  async getUserChats(userId: string, page: number = 1, limit: number = 10): Promise<UserChatsResponse> {
+    const response = await api.get(`${API_BASE}/users/${userId}/chats`, {
+      params: { page, limit }
+    })
     return response.data
   },
 
