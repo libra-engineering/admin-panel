@@ -149,7 +149,9 @@ export default function OrganizationsPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => navigate(`/admin/organizations/${org.id}`)}
+                        onClick={() =>
+                          navigate(`/admin/organizations/${org.id}`)
+                        }
                       >
                         View
                       </Button>
@@ -217,6 +219,7 @@ function EditOrganizationModal({
     emailDomain: organization.emailDomain,
     verified: organization.verified,
     allowModelChange: organization.allowModelChange,
+    enableToolDebugView: organization.enableToolDebugView,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -242,17 +245,17 @@ function EditOrganizationModal({
               required
             />
           </div>
-           <div>
+          <div>
             <label className="block text-sm text-start font-medium text-gray-700 mb-1">
               Domain *
             </label>
-          <Input
-            value={formData.emailDomain}
-            onChange={(e) =>
-              setFormData({ ...formData, emailDomain: e.target.value })
-            }
-            required
-          />
+            <Input
+              value={formData.emailDomain}
+              onChange={(e) =>
+                setFormData({ ...formData, emailDomain: e.target.value })
+              }
+              required
+            />
           </div>
           <div className="flex items-center space-x-4">
             <label className="flex items-center">
@@ -279,6 +282,20 @@ function EditOrganizationModal({
                 className="mr-2"
               />
               <span className="text-sm">Allow Model Change</span>
+            </label>
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={formData.enableToolDebugView}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    enableToolDebugView: e.target.checked,
+                  })
+                }
+                className="mr-2"
+              />
+              <span className="text-sm">Enable Tool Debug View</span>
             </label>
           </div>
           <div className="flex justify-end space-x-2">

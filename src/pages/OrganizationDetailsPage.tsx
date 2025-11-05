@@ -37,6 +37,7 @@ interface EditOrgForm {
   emailDomain: string;
   verified: boolean;
   allowModelChange: boolean;
+  enableToolDebugView: boolean;
 }
 
 export default function OrganizationDetailsPage() {
@@ -56,6 +57,7 @@ export default function OrganizationDetailsPage() {
     emailDomain: "",
     verified: false,
     allowModelChange: false,
+    enableToolDebugView: false,
   });
 
   // Connectors state
@@ -165,6 +167,7 @@ export default function OrganizationDetailsPage() {
         emailDomain: orgDetails.emailDomain,
         verified: orgDetails.verified,
         allowModelChange: orgDetails.allowModelChange,
+        enableToolDebugView: orgDetails.enableToolDebugView,
       });
     } catch (error) {
       console.error("Failed to fetch organization details:", error);
@@ -403,6 +406,7 @@ export default function OrganizationDetailsPage() {
                     emailDomain: organization.emailDomain,
                     verified: organization.verified,
                     allowModelChange: organization.allowModelChange,
+                    enableToolDebugView: organization.enableToolDebugView,
                   });
                 }}
               >
@@ -535,6 +539,26 @@ export default function OrganizationDetailsPage() {
                       Allow Model Change
                     </label>
                   </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      id="enableToolDebugView"
+                      type="checkbox"
+                      checked={editForm.enableToolDebugView}
+                      onChange={(e) =>
+                        handleEditFormChange(
+                          "enableToolDebugView",
+                          e.target.checked
+                        )
+                      }
+                      className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                    />
+                    <label
+                      htmlFor="enableToolDebugView"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Enable Tool Debug View
+                    </label>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -574,6 +598,18 @@ export default function OrganizationDetailsPage() {
                       }
                     >
                       {organization.allowModelChange ? "Yes" : "No"}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                    <span className="text-sm font-medium text-gray-500">
+                      Enable Tool Debug View
+                    </span>
+                    <Badge
+                      variant={
+                        organization.enableToolDebugView ? "success" : "default"
+                      }
+                    >
+                      {organization.enableToolDebugView ? "Yes" : "No"}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between py-3 border-b border-gray-100">

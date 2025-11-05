@@ -7,6 +7,7 @@ export interface Organization {
   updatedAt: string;
   verified: boolean;
   allowModelChange: boolean;
+  enableToolDebugView: boolean;
   _count?: {
     users: number;
     connectors: number;
