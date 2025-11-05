@@ -175,12 +175,23 @@ export default function ServiceEnvVariablesPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Value *</label>
-                <Input
-                  value={createForm.value || ''}
-                  onChange={(e) => setCreateForm({ ...createForm, value: e.target.value })}
-                  placeholder="Variable value"
-                  className="w-full"
-                />
+                {createForm.key === 'WEB_SEARCH_PROVIDER' ? (
+                  <select
+                    value={createForm.value || 'tavily'}
+                    onChange={(e) => setCreateForm({ ...createForm, value: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="tavily">Tavily</option>
+                    <option value="perplexity">Perplexity</option>
+                  </select>
+                ) : (
+                  <Input
+                    value={createForm.value || ''}
+                    onChange={(e) => setCreateForm({ ...createForm, value: e.target.value })}
+                    placeholder="Variable value"
+                    className="w-full"
+                  />
+                )}
               </div>
             </div>
             <div className="flex justify-end space-x-3 mt-6">
@@ -240,11 +251,22 @@ export default function ServiceEnvVariablesPage() {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Value</label>
-                          <Input
-                            value={editForm.value || ''}
-                            onChange={(e) => setEditForm({ ...editForm, value: e.target.value })}
-                            className="w-full"
-                          />
+                          {editForm.key === 'WEB_SEARCH_PROVIDER' ? (
+                            <select
+                              value={editForm.value || 'tavily'}
+                              onChange={(e) => setEditForm({ ...editForm, value: e.target.value })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              <option value="tavily">Tavily</option>
+                              <option value="perplexity">Perplexity</option>
+                            </select>
+                          ) : (
+                            <Input
+                              value={editForm.value || ''}
+                              onChange={(e) => setEditForm({ ...editForm, value: e.target.value })}
+                              className="w-full"
+                            />
+                          )}
                         </div>
                       </div>
                       <div className="flex justify-end space-x-2">
