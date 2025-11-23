@@ -196,6 +196,23 @@ class ServiceApiClient {
     return response.json();
   }
 
+  async exportPromptsCsv(): Promise<string> {
+    const authHeader = this.getAuthHeader();
+    const response = await fetch(`${this.baseURL}/admin/prompts/export`, {
+      method: 'GET',
+      headers: {
+        ...(authHeader && { Authorization: authHeader }),
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Request failed' }));
+      throw new Error(errorData.message || `HTTP ${response.status}`);
+    }
+
+    return response.text();
+  }
+
   // Agents management
   async getAgents() {
     return this.request('/admin/agents');
@@ -348,6 +365,23 @@ class ServiceApiClient {
     }
 
     return response.json();
+  }
+
+  async exportToolPromptsCsv(): Promise<string> {
+    const authHeader = this.getAuthHeader();
+    const response = await fetch(`${this.baseURL}/admin/tool-prompts/export`, {
+      method: 'GET',
+      headers: {
+        ...(authHeader && { Authorization: authHeader }),
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Request failed' }));
+      throw new Error(errorData.message || `HTTP ${response.status}`);
+    }
+
+    return response.text();
   }
 
   async getConnectorsMetadata() {

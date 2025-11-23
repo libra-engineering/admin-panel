@@ -67,9 +67,10 @@ export default function ServicePromptsPage() {
       const res = await serviceApi.bulkImportPrompts(file);
       const totals = res?.totals;
       const created = totals?.created ?? 0;
+      const updated = totals?.updated ?? 0;
       const skipped = totals?.skipped ?? 0;
       const invalid = totals?.invalid ?? 0;
-      toast.success(`Prompts imported: ${created} imported, ${skipped} skipped, ${invalid} invalid`);
+      toast.success(`Prompts: ${created} created, ${updated} updated, ${skipped} skipped, ${invalid} invalid`);
       await fetchPrompts();
     } catch (err: any) {
       const msg = err?.response?.data?.message || err?.message || 'Bulk import prompts failed';
@@ -77,6 +78,25 @@ export default function ServicePromptsPage() {
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleExportCsv = async () => {
+    try {
+      const response = await serviceApi.exportPromptsCsv();
+      const blob = new Blob([response], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'prompts-export.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success('Prompts exported successfully');
+    } catch (err: any) {
+      const msg = err?.message || 'Export failed';
+      toast.error(msg);
     }
   };
 
@@ -133,6 +153,12 @@ export default function ServicePromptsPage() {
             className="hidden"
             onChange={handleCsvSelected}
           />
+          <Button
+            onClick={handleExportCsv}
+            variant="outline"
+          >
+            Export CSV
+          </Button>
           <Button
             onClick={handleBulkCreateClick}
             variant="outline"
