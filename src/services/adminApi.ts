@@ -318,8 +318,15 @@ export const adminApi = {
   async bulkCreateToolPromptsFromCsv(file: File): Promise<BulkToolPromptsCsvResponse> {
     const form = new FormData()
     form.append('file', file)
-    const response = await api.post(`${API_BASE}/tools/bulk-create`, form, {
+    const response = await api.post(`${API_BASE}/tools/import/csv`, form, {
       headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return response.data
+  },
+
+  async exportToolPromptsCsv(): Promise<string> {
+    const response = await api.get(`${API_BASE}/tools/export/csv`, {
+      responseType: 'text',
     })
     return response.data
   },
@@ -368,8 +375,15 @@ export const adminApi = {
   async bulkImortPrompts(file: File): Promise<BulkImportPromptsCsvResponse> {
     const form = new FormData()
     form.append('file', file)
-    const response = await api.post(`${API_BASE}/prompts/bulk-create`, form, {
+    const response = await api.post(`${API_BASE}/prompts/import/csv`, form, {
       headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return response.data
+  },
+
+  async exportPromptsCsv(): Promise<string> {
+    const response = await api.get(`${API_BASE}/prompts/export/csv`, {
+      responseType: 'text',
     })
     return response.data
   },

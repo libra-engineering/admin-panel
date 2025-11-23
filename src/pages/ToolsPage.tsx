@@ -134,6 +134,25 @@ export default function ToolsPage() {
     }
   }
 
+  const handleExportCsv = async () => {
+    try {
+      const response = await adminApi.exportToolPromptsCsv()
+      const blob = new Blob([response], { type: 'text/csv' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'tool-prompts-export.csv'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      toast.success('Tool prompts exported successfully')
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Export failed'
+      toast.error(msg)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -155,6 +174,12 @@ export default function ToolsPage() {
             className="hidden"
             onChange={handleCsvSelected}
           />
+          <Button
+            onClick={handleExportCsv}
+            variant="outline"
+          >
+            Export CSV
+          </Button>
           <Button
             onClick={handleBulkCreateClick}
             variant="outline"
