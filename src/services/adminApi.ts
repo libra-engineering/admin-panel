@@ -138,7 +138,7 @@ export const adminApi = {
   },
 
   async syncConnector(id: string): Promise<{ message: string }> {
-    const response = await api.post(`${API_BASE}/connectors/sadmin/${id}/sync`)
+    const response = await api.post(`/connectors/sadmin/${id}/sync`)
     return response.data
   },
 
