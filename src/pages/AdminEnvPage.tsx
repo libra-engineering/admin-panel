@@ -129,10 +129,11 @@ export default function AdminEnvPage() {
   }
 
   const getMaskedValue = (value: string, id: string) => {
+    const strValue = String(value || '')
     if (!maskedVariables.has(id)) {
-      return value
+      return strValue
     }
-    return value.substring(0, 6) + '*'.repeat(Math.max(0, Math.min(value.length - 6, 44)))
+    return strValue.substring(0, 6) + '*'.repeat(Math.max(0, Math.min(strValue.length - 6, 44)))
   }
 
   const sortedVariables = useMemo(() => 
