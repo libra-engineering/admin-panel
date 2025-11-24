@@ -276,6 +276,7 @@ export default function ConnectorsPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>ID</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Status</TableHead>
@@ -288,6 +289,11 @@ export default function ConnectorsPage() {
             <TableBody>
               {connectors.map((connector) => (
                 <TableRow key={connector.id}>
+                  <TableCell>
+                    <div className="font-medium text-gray-900">
+                      {connector.id}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center">
                       <div className="font-medium text-gray-900">
