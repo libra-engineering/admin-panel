@@ -210,7 +210,7 @@ export default function AdminEnvPage() {
       ) : (
         <div className="grid gap-6">
           {sortedVariables.map(envVar => {
-            const hasValue = !!(envVar.value || '').trim()
+            const hasValue = !!(String(envVar.value || '')).trim()
             const isEditing = editingId === envVar.id
             
             return (
