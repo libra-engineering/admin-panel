@@ -45,7 +45,6 @@ interface ServiceWorkflow {
   category: string;
   nodes: any[];
   edges: any[];
-  toolPreference: 'workflow' | 'all';
   webhookEventName?: string;
   webhookConnectorType?: string;
 }
@@ -129,7 +128,6 @@ export default function ServiceWorkflowBuilder() {
   const workflowId = params?.id as string | undefined
   const [workflowName, setWorkflowName] = useState<string>('Untitled Workflow')
   const [category, setCategory] = useState<string>('')
-  const [toolPreference, setToolPreference] = useState<'workflow' | 'all'>('all')
   const [nodes, setNodes] = useState<Node[]>([])
   const [edges, setEdges] = useState<Edge[]>([])
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
@@ -165,7 +163,6 @@ export default function ServiceWorkflowBuilder() {
         if (wf?.category) setCategory(wf.category)
         if (Array.isArray(wf?.nodes)) setNodes(wf.nodes as any)
         if (Array.isArray(wf?.edges)) setEdges(wf.edges as any)
-        if (wf?.toolPreference && (wf.toolPreference === 'all' || wf.toolPreference === 'workflow')) setToolPreference(wf.toolPreference as any)
       } catch (e) {
         console.error('Failed to load workflow', e)
         toast.error('Failed to load workflow')
@@ -265,7 +262,6 @@ export default function ServiceWorkflowBuilder() {
       nodes: nodes,
       edges: edges,
       workflowType,
-      toolPreference,
       ...(webhookEventName ? { webhookEventName } : {}),
       ...(webhookConnectorType ? { webhookConnectorType } : {}),
       enabled: true,
@@ -373,17 +369,6 @@ export default function ServiceWorkflowBuilder() {
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Input label="Workflow Name" value={workflowName} onChange={(e) => setWorkflowName(e.target.value)} />
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tool Preference</label>
-            <select
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none"
-              value={toolPreference}
-              onChange={(e) => setToolPreference(e.target.value as 'workflow' | 'all')}
-            >
-              <option value="workflow">Workflow Tools Only</option>
-              <option value="all">All Tools</option>
-            </select>
-          </div>
           <Input label="Category" value={category} onChange={(e) => setCategory(e.target.value)} />
         </CardContent>
       </Card>

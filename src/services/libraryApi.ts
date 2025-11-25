@@ -33,9 +33,9 @@ export interface WorkflowLibraryItem {
   nodes: unknown[]
   edges: unknown[]
   workflowType: 'polling' | 'webhook'
-  toolPreference?: 'all' | string
   webhookEventName?: string | null
   webhookConnectorType?: string | null
+  webhookEntityType?: string | null
   enabled: boolean
   createdAt: string
   updatedAt: string
@@ -47,9 +47,9 @@ export interface CreateWorkflowLibraryRequest {
   nodes?: unknown[]
   edges?: unknown[]
   workflowType?: 'polling' | 'webhook'
-  toolPreference?: 'all' | string
   webhookEventName?: string | null
   webhookConnectorType?: string | null
+  webhookEntityType?: string | null
   enabled?: boolean
   category?: string | null
 }
@@ -59,9 +59,9 @@ export interface UpdateWorkflowLibraryRequest {
   nodes?: unknown[]
   edges?: unknown[]
   workflowType?: 'polling' | 'webhook'
-  toolPreference?: 'all' | string
   webhookEventName?: string | null
   webhookConnectorType?: string | null
+  webhookEntityType?: string | null
   enabled?: boolean
 }
 

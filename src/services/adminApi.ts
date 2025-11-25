@@ -613,5 +613,10 @@ export const adminApi = {
   async setModelForAllOrganizations(input: { model: string; providerId: string; type: ModelType }): Promise<{ message: string; count: number }> {
     const response = await api.post(`${API_BASE}/models/org`, input)
     return response.data
+  },
+
+  async getConnectorEntitiesInfo(): Promise<Record<string, string[]>> {
+    const response = await api.get(`${API_BASE}/connectors/info`)
+    return response.data
   }
 } 

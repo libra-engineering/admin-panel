@@ -38,8 +38,6 @@ import { AuthProvider, ProtectedRoute } from './components/auth/AuthContext'
 import { ServiceAuthProvider } from '@/contexts/ServiceAuthContext'
 import { ServiceProtectedRoute } from '@/components/auth/ServiceProtectedRoute'
 import AgentsPage from './pages/AgentsPage'
-import WorkflowBuilder from './pages/WorkflowBuilder'
-import OrganizationConfigPage from '@/pages/OrganizationConfigPage'
 import OrganizationDetailsPage from '@/pages/OrganizationDetailsPage'
 import AdminEnvPage from '@/pages/AdminEnvPage'
 
@@ -90,8 +88,6 @@ const AppContent = () => {
             <Route path="logs" element={<LogsPage />} />
             <Route path="env" element={<AdminEnvPage />} />
             <Route path='agents' element={<AgentsPage />} />
-            <Route path='workflows/new' element={<WorkflowBuilder />} />
-            <Route path='workflows/:id' element={<WorkflowBuilder />} />
           </Route>
           <Route
             path={ROUTES.HOME}
