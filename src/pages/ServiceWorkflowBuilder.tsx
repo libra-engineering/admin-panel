@@ -182,7 +182,7 @@ function WorkflowCanvas(props: {
   )
 }
 
-function TriggerNode({ data }: NodeProps) {
+const TriggerNode = React.memo(({ data }: NodeProps) => {
   const nodeData = (data || {}) as {
     label: string
     subtype?: string
@@ -222,9 +222,9 @@ function TriggerNode({ data }: NodeProps) {
       />
     </div>
   )
-}
+})
 
-function GoalNode({ data }: NodeProps) {
+const GoalNode = React.memo(({ data }: NodeProps) => {
   const nodeData = (data || {}) as { label: string; subtype?: string }
   return (
     <div className="rounded-lg border border-border bg-card text-foreground px-3 py-2 shadow-sm min-w-[180px]">
@@ -250,21 +250,23 @@ function GoalNode({ data }: NodeProps) {
       />
     </div>
   )
-}
+})
 
-function ToolNode({ data }: NodeProps) {
+const ToolNode = React.memo(({ data }: NodeProps) => {
   const nodeData = (data || {}) as { label: string; subtype?: string; toolId?: string }
   const toolId = nodeData.toolId || nodeData.label.toLowerCase().split(' ').join('_')
-  const icon = ToolIconRegistry.getToolIcon(toolId)
-  const iconElement = ToolIconRegistry.isImageIcon(icon)
-    ? React.createElement('img', {
-        src: icon,
-        alt: nodeData.label,
-        className: 'w-4 h-4 object-contain',
-      })
-    : React.createElement(icon, {
-        className: 'w-4 h-4 text-muted-foreground',
-      })
+  const icon = React.useMemo(() => ToolIconRegistry.getToolIcon(toolId), [toolId])
+  const iconElement = React.useMemo(() => {
+    return ToolIconRegistry.isImageIcon(icon)
+      ? React.createElement('img', {
+          src: icon,
+          alt: nodeData.label,
+          className: 'w-4 h-4 object-contain',
+        })
+      : React.createElement(icon, {
+          className: 'w-4 h-4 text-muted-foreground',
+        })
+  }, [icon, nodeData.label])
 
   return (
     <div className="rounded-lg border border-border bg-card text-foreground px-3 py-2 shadow-sm min-w-[180px]">
@@ -290,7 +292,7 @@ function ToolNode({ data }: NodeProps) {
       />
     </div>
   )
-}
+})
 
 export default function ServiceWorkflowBuilder() {
   const navigate = useNavigate()
@@ -324,55 +326,83 @@ export default function ServiceWorkflowBuilder() {
   const [isMonthDropdownOpen, setIsMonthDropdownOpen] = useState(false)
   const monthDropdownRef = useRef<HTMLDetailsElement | null>(null)
 
-  const getNodeById = (id: string) => nodes.find(node => node.id === id)
+  const getNodeById = useCallback((id: string) => nodes.find(node => node.id === id), [nodes])
 
-  const nodesWithIncomingEdges = new Set(edges.map(edge => edge.target))
-  const firstNode = nodes.find(node => !nodesWithIncomingEdges.has(node.id))
-
-  const edgesFromFirstNode = edges.filter(edge => edge.source === firstNode?.id)
-
-  const secondNode =
-    edgesFromFirstNode.length > 0 ? getNodeById(edgesFromFirstNode[0].target) : null
-
-  const edgesFromGoal = edges.filter(edge => edge.source === secondNode?.id)
-  const nodesAfterGoal = edgesFromGoal.map(edge => getNodeById(edge.target)).filter(Boolean)
-
-  const firstNodeIsTrigger =
-    firstNode && (firstNode.data as { subtype?: string })?.subtype?.startsWith('trigger')
-  const secondNodeIsGoal =
-    secondNode && (secondNode.data as { subtype?: string })?.subtype === 'goal'
-  const goalPropertyNotEmpty =
-    secondNode && ((secondNode.data as { goal?: string })?.goal?.trim().length ?? 0) > 0
-  const hasToolOrAgentAfterGoal = nodesAfterGoal.some(node => {
-    const data = node?.data as { subtype?: string }
-    return data?.subtype?.includes('tool') || data?.subtype?.includes('agent')
-  })
-
-  const webhookTriggerValid =
-    firstNode &&
-    (() => {
-      const data = firstNode.data as {
-        subtype?: string
-        connectorType?: string
-        eventType?: string
-      }
-      if (data?.subtype?.includes('webhook')) {
-        return (
-          data.connectorType &&
-          data.eventType &&
-          data.connectorType.trim().length > 0 &&
-          data.eventType.trim().length > 0
-        )
-      }
-      return true
-    })()
-
-  const isWorkflowValid =
-    firstNodeIsTrigger &&
-    secondNodeIsGoal &&
-    goalPropertyNotEmpty &&
-    hasToolOrAgentAfterGoal &&
-    webhookTriggerValid
+  const { 
+    firstNode, 
+    secondNode, 
+    nodesAfterGoal,
+    firstNodeIsTrigger,
+    secondNodeIsGoal,
+    goalPropertyNotEmpty,
+    hasToolOrAgentAfterGoal,
+    webhookTriggerValid,
+    isWorkflowValid
+  } = useMemo(() => {
+    const nodesWithIncomingEdges = new Set(edges.map(edge => edge.target))
+    const first = nodes.find(node => !nodesWithIncomingEdges.has(node.id))
+    
+    const edgesFromFirstNode = edges.filter(edge => edge.source === first?.id)
+    
+    const second =
+      edgesFromFirstNode.length > 0 
+        ? nodes.find(node => node.id === edgesFromFirstNode[0].target) 
+        : null
+    
+    const edgesFromGoal = edges.filter(edge => edge.source === second?.id)
+    const afterGoal = edgesFromGoal
+      .map(edge => nodes.find(node => node.id === edge.target))
+      .filter(Boolean)
+    
+    const firstIsTrigger =
+      first && (first.data as { subtype?: string })?.subtype?.startsWith('trigger')
+    const secondIsGoal =
+      second && (second.data as { subtype?: string })?.subtype === 'goal'
+    const goalNotEmpty =
+      second && ((second.data as { goal?: string })?.goal?.trim().length ?? 0) > 0
+    const hasToolAfterGoal = afterGoal.some(node => {
+      const data = node?.data as { subtype?: string }
+      return data?.subtype?.includes('tool') || data?.subtype?.includes('agent')
+    })
+    
+    const webhookValid =
+      first &&
+      (() => {
+        const data = first.data as {
+          subtype?: string
+          connectorType?: string
+          eventType?: string
+        }
+        if (data?.subtype?.includes('webhook')) {
+          return (
+            data.connectorType &&
+            data.eventType &&
+            data.connectorType.trim().length > 0 &&
+            data.eventType.trim().length > 0
+          )
+        }
+        return true
+      })()
+    
+    const valid =
+      firstIsTrigger &&
+      secondIsGoal &&
+      goalNotEmpty &&
+      hasToolAfterGoal &&
+      webhookValid
+    
+    return {
+      firstNode: first,
+      secondNode: second,
+      nodesAfterGoal: afterGoal,
+      firstNodeIsTrigger: firstIsTrigger,
+      secondNodeIsGoal: secondIsGoal,
+      goalPropertyNotEmpty: goalNotEmpty,
+      hasToolOrAgentAfterGoal: hasToolAfterGoal,
+      webhookTriggerValid: webhookValid,
+      isWorkflowValid: valid
+    }
+  }, [nodes, edges])
 
   useEffect(() => {
     ;(async () => {
@@ -634,7 +664,7 @@ export default function ServiceWorkflowBuilder() {
           data: {
             label,
             subtype,
-            ...(subtype.includes('polling') ? { schedule: '1800' } : {}),
+            ...(subtype.includes('polling') ? { schedule: null } : {}),
             ...(subtype.includes('webhook')
               ? {
                   connectorType: connectorType || '',
@@ -676,9 +706,12 @@ export default function ServiceWorkflowBuilder() {
     [addNodeToCanvas]
   )
 
-  const selectedNode = selectedNodeId ? nodes.find(n => n.id === selectedNodeId) || null : null
+  const selectedNode = useMemo(
+    () => (selectedNodeId ? nodes.find(n => n.id === selectedNodeId) || null : null),
+    [selectedNodeId, nodes]
+  )
 
-  function updateSelectedNodeData(partial: Record<string, unknown>) {
+  const updateSelectedNodeData = useCallback((partial: Record<string, unknown>) => {
     if (!selectedNodeId) return
     setNodes(current =>
       current.map(n => {
@@ -715,10 +748,14 @@ export default function ServiceWorkflowBuilder() {
         return n
       })
     )
-  }
+  }, [selectedNodeId])
 
   function generatePollingTriggerLabel(schedule: unknown): string | null {
     try {
+      if (schedule === null || schedule === undefined) {
+        return 'Polling Trigger'
+      }
+      
       let seconds = 0
 
       if (typeof schedule === 'string' || typeof schedule === 'number') {
@@ -840,6 +877,9 @@ export default function ServiceWorkflowBuilder() {
   }))
 
   const parseScheduleConfig = (schedule: unknown) => {
+    if (schedule === null || schedule === undefined) {
+      return null
+    }
     if (typeof schedule === 'string' || typeof schedule === 'number') {
       return {
         type: 'interval' as const,
@@ -883,10 +923,7 @@ export default function ServiceWorkflowBuilder() {
         }
       }
     }
-    return {
-      type: 'interval' as const,
-      value: 1800,
-    }
+    return null
   }
 
   const formatToolName = (raw: string): string => {
@@ -964,8 +1001,8 @@ export default function ServiceWorkflowBuilder() {
             disabled={!isWorkflowValid}
             className={`inline-flex items-center gap-2 px-4 py-1.5 text-sm rounded-md font-medium transition-all ${
               isWorkflowValid
-                ? 'bg-main text-white hover:bg-main/90'
-                : 'bg-muted text-muted-foreground cursor-not-allowed'
+                ? 'cursor-pointer'
+                : 'cursor-not-allowed'
             }`}
           >
             Save
@@ -1327,11 +1364,12 @@ export default function ServiceWorkflowBuilder() {
                   const subtype = data.subtype || ''
                   if (subtype.includes('polling')) {
                     const scheduleConfig = parseScheduleConfig(data.schedule)
-                    const isInterval = scheduleConfig.type === 'interval'
-                    const isDayBased = scheduleConfig.type === 'dayBased'
-                    const isMonthBased = (scheduleConfig as any).type === 'monthBased'
+                    const isInterval = scheduleConfig?.type === 'interval'
+                    const isDayBased = scheduleConfig?.type === 'dayBased'
+                    const isMonthBased = (scheduleConfig as any)?.type === 'monthBased'
+                    const isNull = scheduleConfig === null
 
-                    const current = isInterval ? String(scheduleConfig.value) : '1800'
+                    const current = isInterval ? String((scheduleConfig as any).value) : '1800'
                     const isPreset = pollingOptions.some(
                       opt =>
                         opt.value === current &&
@@ -1340,7 +1378,7 @@ export default function ServiceWorkflowBuilder() {
                         opt.value !== 'monthBased'
                     )
                     const isCustomInterval = isInterval && !isPreset
-                    const seconds = isInterval ? scheduleConfig.value : 1800
+                    const seconds = isInterval ? (scheduleConfig as any).value : 1800
                     const derivedUnit: 'minute' | 'hour' =
                       seconds % 3600 === 0 && seconds > 0 ? 'hour' : 'minute'
                     const derivedEvery = Math.max(
@@ -1349,7 +1387,7 @@ export default function ServiceWorkflowBuilder() {
                     )
 
                     const dayBasedValue = isDayBased
-                      ? (scheduleConfig.value as {
+                      ? ((scheduleConfig as any).value as {
                           daysOfWeek: number[]
                           time: string
                         })
@@ -1366,6 +1404,11 @@ export default function ServiceWorkflowBuilder() {
                         <div className="text-xs text-muted-foreground uppercase tracking-wide">
                           Polling schedule
                         </div>
+                        {isNull && (
+                          <div className="text-xs text-muted-foreground p-2 bg-muted/30 rounded-md mb-2">
+                            Please select a polling schedule to configure when this workflow runs.
+                          </div>
+                        )}
                         <div className="grid grid-cols-2 gap-2">
                           {pollingOptions.map(opt => {
                             let active = false
