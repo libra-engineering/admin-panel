@@ -13,3 +13,12 @@ body {
   color: #111827;
   scroll-behavior: smooth;
 }
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
