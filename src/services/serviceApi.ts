@@ -272,14 +272,14 @@ class ServiceApiClient {
     return this.request(`/admin/workflows/${id}`);
   }
 
-  async createWorkflow(workflowData: { name: string; nodes?: unknown[]; edges?: unknown[]; workflowType?: 'polling' | 'webhook'; webhookEventName?: string; webhookConnectorType?: string; webhookEntityType?: string | null; enabled?: boolean; category?: string }) {
+  async createWorkflow(workflowData: { name: string; nodes?: unknown[]; edges?: unknown[]; workflowType?: 'polling' | 'webhook'; webhookEventName?: string; webhookConnectorType?: string; webhookEntityType?: string | null; customInstructions?: string | null; enabled?: boolean; category?: string }) {
     return this.request('/admin/workflows', {
       method: 'POST',
       body: JSON.stringify(workflowData),
     });
   }
 
-  async updateWorkflow(id: string, workflowData: { name?: string; nodes?: unknown[]; edges?: unknown[]; workflowType?: 'polling' | 'webhook'; webhookEventName?: string; webhookConnectorType?: string; webhookEntityType?: string | null; enabled?: boolean; category?: string }) {
+  async updateWorkflow(id: string, workflowData: { name?: string; nodes?: unknown[]; edges?: unknown[]; workflowType?: 'polling' | 'webhook'; webhookEventName?: string; webhookConnectorType?: string; webhookEntityType?: string | null; customInstructions?: string | null; enabled?: boolean; category?: string }) {
     return this.request(`/admin/workflows/${id}`, {
       method: 'PUT',
       body: JSON.stringify(workflowData),

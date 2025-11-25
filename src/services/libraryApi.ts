@@ -50,6 +50,7 @@ export interface CreateWorkflowLibraryRequest {
   webhookEventName?: string | null
   webhookConnectorType?: string | null
   webhookEntityType?: string | null
+  customInstructions?: string | null
   enabled?: boolean
   category?: string | null
 }
@@ -62,6 +63,7 @@ export interface UpdateWorkflowLibraryRequest {
   webhookEventName?: string | null
   webhookConnectorType?: string | null
   webhookEntityType?: string | null
+  customInstructions?: string | null
   enabled?: boolean
 }
 
