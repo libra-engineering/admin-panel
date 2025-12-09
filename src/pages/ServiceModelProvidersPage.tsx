@@ -117,7 +117,7 @@ export default function ServiceModelProvidersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Model Providers</h1>
+          <h1 className="text-3xl font-bold text-gray-900 text-left">Model Providers</h1>
           <p className="text-gray-600 mt-1">Manage AI model providers</p>
         </div>
         <Button onClick={handleCreate} className="flex items-center">
