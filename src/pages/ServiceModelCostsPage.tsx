@@ -68,8 +68,8 @@ export default function ServiceModelCostsPage() {
         serviceApi.getModels(),
         serviceApi.getModelProviders()
       ]);
-      setModels(modelsData);
-      setProviders(providersData);
+      setModels(modelsData as AIModel[]);
+      setProviders(providersData as ModelProvider[]);
     } catch (error) {
       console.error('Failed to fetch options:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to fetch options');
