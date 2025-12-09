@@ -3,6 +3,7 @@ import { serviceApi } from '@/services/serviceApi';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Plus, Edit, Trash2, Search, DollarSign } from 'lucide-react';
 
@@ -16,9 +17,27 @@ interface ModelCost {
   updatedAt: string;
 }
 
+interface AIModel {
+  id: number;
+  providerId: number;
+  model: string;
+  provider?: {
+    id: number;
+    name: string;
+  };
+}
+
+interface ModelProvider {
+  id: number;
+  name: string;
+}
+
 export default function ServiceModelCostsPage() {
   const [modelCosts, setModelCosts] = useState<ModelCost[]>([]);
+  const [models, setModels] = useState<AIModel[]>([]);
+  const [providers, setProviders] = useState<ModelProvider[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingOptions, setIsLoadingOptions] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -32,8 +51,32 @@ export default function ServiceModelCostsPage() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    fetchModelCosts();
+    fetchData();
   }, []);
+
+  const fetchData = async () => {
+    await Promise.all([
+      fetchModelCosts(),
+      fetchOptions()
+    ]);
+  };
+
+  const fetchOptions = async () => {
+    try {
+      setIsLoadingOptions(true);
+      const [modelsData, providersData] = await Promise.all([
+        serviceApi.getModels(),
+        serviceApi.getModelProviders()
+      ]);
+      setModels(modelsData);
+      setProviders(providersData);
+    } catch (error) {
+      console.error('Failed to fetch options:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to fetch options');
+    } finally {
+      setIsLoadingOptions(false);
+    }
+  };
 
   const fetchModelCosts = async () => {
     try {
@@ -56,6 +99,53 @@ export default function ServiceModelCostsPage() {
       cost.provider.toLowerCase().includes(term)
     );
   }, [modelCosts, searchTerm]);
+
+  const existingCombinations = useMemo(() => {
+    return new Set(modelCosts.map(cost => `${cost.model}::${cost.provider}`));
+  }, [modelCosts]);
+
+  const availableModelOptions = useMemo(() => {
+    const uniqueModels = new Set<string>();
+    
+    if (isEditing && selectedCost) {
+      uniqueModels.add(selectedCost.model);
+    }
+    
+    models.forEach(model => {
+      uniqueModels.add(model.model);
+    });
+    
+    return Array.from(uniqueModels).sort().map(model => ({ value: model, label: model }));
+  }, [models, isEditing, selectedCost]);
+
+  const availableProviderOptions = useMemo(() => {
+    const selectedModel = formData.model || (isEditing && selectedCost ? selectedCost.model : '');
+    
+    if (!selectedModel) {
+      return providers.map(provider => ({ value: provider.name, label: provider.name }));
+    }
+
+    if (isEditing && selectedCost) {
+      const availableProviders = new Set<string>();
+      availableProviders.add(selectedCost.provider);
+      
+      providers.forEach(provider => {
+        const combination = `${selectedModel}::${provider.name}`;
+        if (!existingCombinations.has(combination) || provider.name === selectedCost.provider) {
+          availableProviders.add(provider.name);
+        }
+      });
+      
+      return Array.from(availableProviders).sort().map(provider => ({ value: provider, label: provider }));
+    }
+
+    return providers
+      .filter(provider => {
+        const combination = `${selectedModel}::${provider.name}`;
+        return !existingCombinations.has(combination);
+      })
+      .map(provider => ({ value: provider.name, label: provider.name }));
+  }, [providers, formData.model, existingCombinations, isEditing, selectedCost]);
 
   const handleCreate = () => {
     setIsEditing(false);
@@ -271,23 +361,44 @@ export default function ServiceModelCostsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Model Name *
                 </label>
-                <Input
+                <Select
                   value={formData.model}
-                  onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                  placeholder="e.g. gpt-4"
+                  onChange={(e) => {
+                    setFormData({ ...formData, model: e.target.value, provider: '' });
+                  }}
+                  options={[
+                    { value: '', label: 'Select a model...' },
+                    ...availableModelOptions
+                  ]}
                   required
+                  disabled={isLoadingOptions}
                 />
+                {isLoadingOptions && (
+                  <p className="text-xs text-gray-500 mt-1">Loading models...</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Provider *
                 </label>
-                <Input
+                <Select
                   value={formData.provider}
                   onChange={(e) => setFormData({ ...formData, provider: e.target.value })}
-                  placeholder="e.g. OpenAI"
+                  options={[
+                    { value: '', label: 'Select a provider...' },
+                    ...availableProviderOptions
+                  ]}
                   required
+                  disabled={isLoadingOptions || !formData.model}
                 />
+                {!formData.model && (
+                  <p className="text-xs text-gray-500 mt-1">Please select a model first</p>
+                )}
+                {formData.model && availableProviderOptions.length === 0 && (
+                  <p className="text-xs text-amber-600 mt-1">
+                    All providers for this model already have costs configured
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
