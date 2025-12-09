@@ -13,7 +13,11 @@ import {
   FileText,
   Bot,
   Workflow,
-  Wrench
+  Wrench,
+  Server,
+  Cpu,
+  DollarSign,
+  Activity
 } from "lucide-react";
 
 export default function ServiceLayout() {
@@ -60,11 +64,26 @@ export default function ServiceLayout() {
       href: "/service/agents",
       icon: <Bot />,
     },
-    // {
-    //   name: "Users",
-    //   href: "/service/users",
-    //   icon: <Users />,
-    // },
+    {
+      name: "Model Providers",
+      href: "/service/model-providers",
+      icon: <Server />,
+    },
+    {
+      name: "Models",
+      href: "/service/models",
+      icon: <Cpu />,
+    },
+    {
+      name: "Model Costs",
+      href: "/service/model-costs",
+      icon: <DollarSign />,
+    },
+    {
+      name: "Model Usage",
+      href: "/service/model-usage",
+      icon: <Activity />,
+    },
   ];
 
   // Close user menu when clicking outside

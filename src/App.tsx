@@ -31,6 +31,10 @@ import ServiceWorkflowBuilder from '@/pages/ServiceWorkflowBuilder'
 import ServicePromptEditor from '@/pages/ServicePromptEditor'
 import ServiceToolsPage from '@/pages/ServiceToolsPage'
 import ServiceToolEditor from '@/pages/ServiceToolEditor'
+import ServiceModelProvidersPage from '@/pages/ServiceModelProvidersPage'
+import ServiceModelsPage from '@/pages/ServiceModelsPage'
+import ServiceModelCostsPage from '@/pages/ServiceModelCostsPage'
+import ServiceModelUsagePage from '@/pages/ServiceModelUsagePage'
 import { ROUTES } from '@/lib/constants'
 import './App.css'
 import { Toaster } from 'sonner'
@@ -152,6 +156,10 @@ const AppContent = () => {
             <Route path="agents" element={<ServiceAgentsPage />} />
             <Route path="workflows/new" element={<ServiceWorkflowBuilder />} />
             <Route path="workflows/:id" element={<ServiceWorkflowBuilder />} />
+            <Route path="model-providers" element={<ServiceModelProvidersPage />} />
+            <Route path="models" element={<ServiceModelsPage />} />
+            <Route path="model-costs" element={<ServiceModelCostsPage />} />
+            <Route path="model-usage" element={<ServiceModelUsagePage />} />
           </Route>
           
           <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />

@@ -387,6 +387,102 @@ class ServiceApiClient {
   async getConnectorsMetadata() {
     return this.request('/admin/connectors/metadata');
   }
+
+  async getModelProviders() {
+    return this.request('/admin/model-providers');
+  }
+
+  async getModelProvider(id: string) {
+    return this.request(`/admin/model-providers/${id}`);
+  }
+
+  async createModelProvider(data: { name: string }) {
+    return this.request('/admin/model-providers', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateModelProvider(id: string, data: { name: string }) {
+    return this.request(`/admin/model-providers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteModelProvider(id: string) {
+    return this.request(`/admin/model-providers/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getModels() {
+    return this.request('/admin/models');
+  }
+
+  async getModel(id: string) {
+    return this.request(`/admin/models/${id}`);
+  }
+
+  async createModel(data: { model: string; providerId: number }) {
+    return this.request('/admin/models', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateModel(id: string, data: { model: string; providerId: number }) {
+    return this.request(`/admin/models/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteModel(id: string) {
+    return this.request(`/admin/models/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getModelCosts() {
+    return this.request('/admin/model-costs');
+  }
+
+  async getModelCost(id: string) {
+    return this.request(`/admin/model-costs/${id}`);
+  }
+
+  async createModelCost(data: { model: string; provider: string; inputCost: number; outputCost: number }) {
+    return this.request('/admin/model-costs', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateModelCost(id: string, data: { model: string; provider: string; inputCost: number; outputCost: number }) {
+    return this.request(`/admin/model-costs/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteModelCost(id: string) {
+    return this.request(`/admin/model-costs/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getModelUsage(params?: { page?: number; limit?: number; orgId?: number; model?: string; provider?: string }) {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.orgId) queryParams.append('orgId', params.orgId.toString());
+    if (params?.model) queryParams.append('model', params.model);
+    if (params?.provider) queryParams.append('provider', params.provider);
+    
+    const queryString = queryParams.toString();
+    return this.request(`/admin/model-usage${queryString ? `?${queryString}` : ''}`);
+  }
 }
 
 export const serviceApi = new ServiceApiClient(); 
