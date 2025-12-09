@@ -618,5 +618,35 @@ export const adminApi = {
   async getConnectorEntitiesInfo(): Promise<Record<string, string[]>> {
     const response = await api.get(`${API_BASE}/connectors/info`)
     return response.data
+  },
+
+  async getModelPricings(): Promise<any[]> {
+    const response = await api.get(`${API_BASE}/model-pricing`)
+    return response.data?.data || response.data || []
+  },
+
+  async getModelPricing(id: string): Promise<any> {
+    const response = await api.get(`${API_BASE}/model-pricing/${id}`)
+    return response.data?.data || response.data
+  },
+
+  async createModelPricing(data: { model: string; inputCost?: number | null; outputCost?: number | null }): Promise<any> {
+    const response = await api.post(`${API_BASE}/model-pricing`, data)
+    return response.data?.data || response.data
+  },
+
+  async updateModelPricing(id: string, data: { model?: string; inputCost?: number | null; outputCost?: number | null }): Promise<any> {
+    const response = await api.put(`${API_BASE}/model-pricing/${id}`, data)
+    return response.data?.data || response.data
+  },
+
+  async deleteModelPricing(id: string): Promise<{ message: string }> {
+    const response = await api.delete(`${API_BASE}/model-pricing/${id}`)
+    return response.data
+  },
+
+  async getAllLLMModels(): Promise<any[]> {
+    const response = await api.get(`${API_BASE}/models/all`)
+    return response.data?.data || response.data || []
   }
 } 

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAppSelector } from "@/hooks/useAppSelector";
 import { authAPI } from "@/services/api";
-import { Bot, Building2, CreditCard, LayoutDashboard, MessageCircle, Package, Server, ServerCogIcon, Shapes, SquareArrowOutUpRight, Users, Wrench } from "lucide-react";
+import { Bot, Building2, CreditCard, LayoutDashboard, MessageCircle, Package, Server, ServerCogIcon, Shapes, SquareArrowOutUpRight, Users, Wrench, DollarSign } from "lucide-react";
 import { ROUTES } from "@/lib/constants";
 
 
@@ -49,6 +49,11 @@ export default function AdminLayout() {
       name: "Models",
       href: ROUTES.ADMIN_MODELS,
       icon: <Shapes />,
+    },
+    {
+      name: "Model Pricing",
+      href: "/admin/model-pricing",
+      icon: <DollarSign />,
     },
     { name: 'Tools', href: '/admin/tools', 
       icon: <Wrench />,

@@ -44,6 +44,7 @@ import { ServiceProtectedRoute } from '@/components/auth/ServiceProtectedRoute'
 import AgentsPage from './pages/AgentsPage'
 import OrganizationDetailsPage from '@/pages/OrganizationDetailsPage'
 import AdminEnvPage from '@/pages/AdminEnvPage'
+import AdminModelPricingPage from '@/pages/AdminModelPricingPage'
 
 // App component with authentication logic
 const AppContent = () => {
@@ -92,6 +93,7 @@ const AppContent = () => {
             <Route path="logs" element={<LogsPage />} />
             <Route path="env" element={<AdminEnvPage />} />
             <Route path='agents' element={<AgentsPage />} />
+            <Route path="model-pricing" element={<AdminModelPricingPage />} />
           </Route>
           <Route
             path={ROUTES.HOME}
