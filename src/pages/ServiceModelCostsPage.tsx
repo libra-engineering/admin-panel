@@ -105,6 +105,7 @@ export default function ServiceModelCostsPage() {
   }, [modelCosts]);
 
   const availableModelOptions = useMemo(() => {
+    const modelsWithCosts = new Set(modelCosts.map(cost => cost.model));
     const uniqueModels = new Set<string>();
     
     if (isEditing && selectedCost) {
@@ -112,11 +113,13 @@ export default function ServiceModelCostsPage() {
     }
     
     models.forEach(model => {
-      uniqueModels.add(model.model);
+      if (!modelsWithCosts.has(model.model)) {
+        uniqueModels.add(model.model);
+      }
     });
     
     return Array.from(uniqueModels).sort().map(model => ({ value: model, label: model }));
-  }, [models, isEditing, selectedCost]);
+  }, [models, modelCosts, isEditing, selectedCost]);
 
   const availableProviderOptions = useMemo(() => {
     const selectedModel = formData.model || (isEditing && selectedCost ? selectedCost.model : '');
